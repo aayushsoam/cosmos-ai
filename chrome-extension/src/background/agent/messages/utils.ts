@@ -1,5 +1,5 @@
 import { type BaseMessage, AIMessage, HumanMessage, SystemMessage, ToolMessage } from '@langchain/core/messages';
-
+import { jsonrepair } from 'jsonrepair';
 import { guardrails } from '@src/background/services/guardrails';
 
 /**
@@ -47,95 +47,145 @@ export function removeThinkTags(text: string): string {
  */
 export function extractJsonFromModelOutput(content: string): Record<string, unknown> {
   try {
-    let processedContent = content;
+    let processedContent = content.trim();
+
+    // Remove any XML/HTML-like tags but KEEP their inner content
+    // This avoids deleting useful JSON that may be wrapped in tags like <response> ... </response>
+    processedContent = processedContent.replace(/<\/?[a-zA-Z][^>]*>/g, '');
+    processedContent = processedContent.trim();
 
     // Handle Llama's tool call format first
     if (processedContent.includes('<|tool_call_start_id|>')) {
-      // Extract content between tool call tags
       const startTag = '<|tool_call_start_id|>';
       const endTag = '<|tool_call_end_id|>';
       const startIndex = processedContent.indexOf(startTag) + startTag.length;
       let endIndex = processedContent.indexOf(endTag);
-
-      if (endIndex === -1) {
-        // If no end tag found, take everything after start tag
-        endIndex = processedContent.length;
-      }
-
-      processedContent = processedContent.substring(startIndex, endIndex).trim();
-
-      // Parse the tool call structure
-      const toolCall = JSON.parse(processedContent);
-
-      // Extract the actual parameters (which contains the agent output)
+      if (endIndex === -1) endIndex = processedContent.length;
+      const toolCallStr = processedContent.substring(startIndex, endIndex).trim();
+      const toolCall = JSON.parse(toolCallStr);
       if (toolCall.parameters) {
-        // The parameters field contains an escaped JSON string
         const parametersJson = JSON.parse(toolCall.parameters);
         return parametersJson;
       }
-
       throw new Error('Tool call structure does not contain parameters');
     }
 
     // Handle Llama's python tag format
     if (processedContent.includes('<|python_tag|>')) {
-      // Extract content between python tags
       const startTag = '<|python_tag|>';
       const endTag = '<|/python_tag|>';
       const startIndex = processedContent.indexOf(startTag) + startTag.length;
       let endIndex = processedContent.indexOf(endTag);
-
-      if (endIndex === -1) {
-        // If no end tag found, take everything after start tag
-        endIndex = processedContent.length;
-      }
-
-      processedContent = processedContent.substring(startIndex, endIndex).trim();
-
-      // Parse the python tag structure
-      const pythonCall = JSON.parse(processedContent);
-
-      // Extract the actual parameters (which contains the agent output)
+      if (endIndex === -1) endIndex = processedContent.length;
+      const pythonStr = processedContent.substring(startIndex, endIndex).trim();
+      const pythonCall = JSON.parse(pythonStr);
       if (pythonCall.parameters && pythonCall.parameters.output) {
-        // Try to parse the output if it's a JSON string
         if (typeof pythonCall.parameters.output === 'string') {
           try {
-            const outputJson = JSON.parse(pythonCall.parameters.output);
-            return outputJson;
-          } catch (e) {
-            // If it's not valid JSON, return as is
+            return JSON.parse(pythonCall.parameters.output);
+          } catch {
             return { output: pythonCall.parameters.output };
           }
         }
-
         return pythonCall.parameters;
       }
-
       throw new Error('Python tag structure does not contain valid parameters');
     }
 
-    // If content is wrapped in code blocks, extract just the JSON part
-    if (processedContent.includes('```')) {
-      // Find the JSON content between code blocks
-      const parts = processedContent.split('```');
-      processedContent = parts[1];
-
-      // Remove language identifier if present (e.g., 'json\n')
-      if (processedContent.startsWith('json')) {
-        processedContent = processedContent.substring(4).trim();
+    // Try to extract from a fenced code block first
+    const codeBlockMatch = processedContent.match(/```(?:json|json5|javascript|js)?\s*([\s\S]*?)```/i);
+    if (codeBlockMatch && codeBlockMatch[1]) {
+      const candidate = codeBlockMatch[1].trim();
+      try {
+        return JSON.parse(candidate);
+      } catch {
+        try {
+          // Try to repair slightly malformed JSON
+          const repaired = jsonrepair(candidate);
+          return JSON.parse(repaired);
+        } catch {
+          // Continue to next extraction method
+        }
       }
     }
 
-    // Parse the cleaned content
-    return JSON.parse(processedContent);
+    // No fenced block: try to locate the first balanced JSON object/array
+    const startIdx = processedContent.search(/[\[{]/);
+    if (startIdx !== -1) {
+      const jsonSlice = extractFirstBalancedJson(processedContent.slice(startIdx));
+      try {
+        return JSON.parse(jsonSlice);
+      } catch {
+        try {
+          // Try to repair then parse
+          const repaired = jsonrepair(jsonSlice);
+          return JSON.parse(repaired);
+        } catch {
+          // Continue to next method
+        }
+      }
+    }
+
+    // Fall back: try direct parse
+    try {
+      return JSON.parse(processedContent);
+    } catch {
+      // Last resort: try to repair entire content
+      const repaired = jsonrepair(processedContent);
+      return JSON.parse(repaired);
+    }
   } catch (e) {
     console.warn(`Failed to parse model output: ${content} ${e instanceof Error ? e.message : String(e)}`);
     throw new Error('Could not parse response.');
   }
 }
 
+// Extract the first balanced JSON substring starting at the first { or [
+function extractFirstBalancedJson(input: string): string {
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  let start = -1;
+  let quoteChar: string | null = null;
+
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i];
+
+    if (inString) {
+      if (escape) {
+        escape = false;
+      } else if (ch === '\\') {
+        escape = true;
+      } else if (ch === quoteChar) {
+        inString = false;
+        quoteChar = null;
+      }
+      continue;
+    }
+
+    if (ch === '"' || ch === "'") {
+      inString = true;
+      quoteChar = ch;
+      continue;
+    }
+
+    if (ch === '{' || ch === '[') {
+      if (depth === 0) start = i;
+      depth++;
+    } else if (ch === '}' || ch === ']') {
+      depth--;
+      if (depth === 0 && start !== -1) {
+        return input.slice(start, i + 1);
+      }
+    }
+  }
+
+  // If we didn't find a balanced block, return the whole input trimmed
+  return input.trim();
+}
+
 /**
- * Convert input messages to a format that is compatible with the planner model
+ * Convert input messages to a format that is compatible with the thinker model
  * @param inputMessages - List of messages to convert
  * @param modelName - Name of the model to convert messages for
  * @returns Converted list of messages

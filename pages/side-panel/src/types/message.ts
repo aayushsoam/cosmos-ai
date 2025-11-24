@@ -9,9 +9,9 @@ export const ACTOR_PROFILES = {
     icon: 'icons/system.svg',
     iconBackground: '#2196F3',
   },
-  planner: {
-    name: 'Planner',
-    icon: 'icons/planner.svg',
+  thinker: {
+    name: 'thinker',
+    icon: 'icons/thinker.svg',
     iconBackground: '#FF9800',
   },
   navigator: {

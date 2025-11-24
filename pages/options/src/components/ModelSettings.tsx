@@ -22,6 +22,7 @@ import {
   type ProviderConfig,
 } from '@extension/storage';
 import { t } from '@extension/i18n';
+import { ProviderSelector } from './ProviderSelector';
 
 // Helper function to check if a model is an OpenAI reasoning model (O-series or GPT-5 models)
 function isOpenAIReasoningModel(modelName: string): boolean {
@@ -63,11 +64,11 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
   const [providersFromStorage, setProvidersFromStorage] = useState<Set<string>>(new Set());
   const [selectedModels, setSelectedModels] = useState<Record<AgentNameEnum, string>>({
     [AgentNameEnum.Navigator]: '',
-    [AgentNameEnum.Planner]: '',
+    [AgentNameEnum.thinker]: '',
   });
   const [modelParameters, setModelParameters] = useState<Record<AgentNameEnum, { temperature: number; topP: number }>>({
     [AgentNameEnum.Navigator]: { temperature: 0, topP: 0 },
-    [AgentNameEnum.Planner]: { temperature: 0, topP: 0 },
+    [AgentNameEnum.thinker]: { temperature: 0, topP: 0 },
   });
 
   // State for reasoning effort for O-series models
@@ -75,7 +76,7 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
     Record<AgentNameEnum, 'minimal' | 'low' | 'medium' | 'high' | undefined>
   >({
     [AgentNameEnum.Navigator]: undefined,
-    [AgentNameEnum.Planner]: undefined,
+    [AgentNameEnum.thinker]: undefined,
   });
   const [newModelInputs, setNewModelInputs] = useState<Record<string, string>>({});
   const [isProviderSelectorOpen, setIsProviderSelectorOpen] = useState(false);
@@ -120,7 +121,7 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
     const loadAgentModels = async () => {
       try {
         const models: Record<AgentNameEnum, string> = {
-          [AgentNameEnum.Planner]: '',
+          [AgentNameEnum.thinker]: '',
           [AgentNameEnum.Navigator]: '',
         };
 
@@ -589,7 +590,7 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
         // Reset reasoning effort if switching models
         if (isOpenAIReasoningModel(modelValue)) {
           // Set default reasoning effort based on agent type
-          const defaultReasoningEffort = agentName === AgentNameEnum.Planner ? 'low' : 'minimal';
+          const defaultReasoningEffort = agentName === AgentNameEnum.thinker ? 'low' : 'minimal';
           setReasoningEffort(prev => ({
             ...prev,
             [agentName]: prev[agentName] || defaultReasoningEffort,
@@ -612,7 +613,7 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
           modelName: model,
           parameters: parametersToSave,
           reasoningEffort: isOpenAIReasoningModel(modelValue)
-            ? reasoningEffort[agentName] || (agentName === AgentNameEnum.Planner ? 'low' : 'minimal')
+            ? reasoningEffort[agentName] || (agentName === AgentNameEnum.thinker ? 'low' : 'minimal')
             : undefined,
         });
       } else {
@@ -850,7 +851,7 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
             <div className="flex flex-1 items-center space-x-2">
               <select
                 id={`${agentName}-reasoning-effort`}
-                value={reasoningEffort[agentName] || (agentName === AgentNameEnum.Planner ? 'low' : 'minimal')}
+                value={reasoningEffort[agentName] || (agentName === AgentNameEnum.thinker ? 'low' : 'minimal')}
                 onChange={e =>
                   handleReasoningEffortChange(agentName, e.target.value as 'minimal' | 'low' | 'medium' | 'high')
                 }
@@ -871,8 +872,8 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
     switch (agentName) {
       case AgentNameEnum.Navigator:
         return t('options_models_agents_navigator');
-      case AgentNameEnum.Planner:
-        return t('options_models_agents_planner');
+      case AgentNameEnum.thinker:
+        return t('options_models_agents_thinker');
       default:
         return '';
     }
@@ -1558,65 +1559,27 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
           )}
 
           {/* Add Provider button and dropdown */}
+          {/* eslint-disable-next-line tailwindcss/no-custom-classname */}
           <div className="provider-selector-container relative pt-4">
             <Button
               variant="secondary"
               onClick={() => setIsProviderSelectorOpen(prev => !prev)}
-              className={`flex w-full items-center justify-center font-medium ${
+              className={`flex w-full items-center justify-center text-base font-semibold ${
                 isDarkMode
-                  ? 'border-blue-700 bg-blue-600 text-white hover:bg-blue-500'
-                  : 'border-blue-200 bg-blue-100 text-blue-800 hover:bg-blue-200'
+                  ? 'border-blue-600 bg-blue-600 text-white hover:bg-blue-500'
+                  : 'border-blue-300 bg-blue-600 text-white hover:bg-blue-500'
               }`}>
-              <span className="mr-2 text-sm">+</span>{' '}
-              <span className="text-sm">{t('options_models_addNewProvider')}</span>
+              <span className="mr-2 text-lg">+</span>
+              <span>{t('options_models_addNewProvider')}</span>
             </Button>
 
-            {isProviderSelectorOpen && (
-              <div
-                className={`absolute z-10 mt-2 w-full overflow-hidden rounded-md border ${
-                  isDarkMode
-                    ? 'border-blue-600 bg-slate-700 shadow-lg shadow-slate-900/50'
-                    : 'border-blue-200 bg-white shadow-xl shadow-blue-100/50'
-                }`}>
-                <div className="py-1">
-                  {/* Map through provider types to create buttons */}
-                  {Object.values(ProviderTypeEnum)
-                    // Allow Azure to appear multiple times, but filter out other already added providers
-                    .filter(
-                      type =>
-                        type === ProviderTypeEnum.AzureOpenAI || // Always show Azure
-                        (type !== ProviderTypeEnum.CustomOpenAI &&
-                          !providersFromStorage.has(type) &&
-                          !modifiedProviders.has(type)),
-                    )
-                    .map(type => (
-                      <button
-                        key={type}
-                        type="button"
-                        className={`flex w-full items-center px-4 py-3 text-left text-sm ${
-                          isDarkMode
-                            ? 'text-blue-200 hover:bg-blue-600/30 hover:text-white'
-                            : 'text-blue-700 hover:bg-blue-100 hover:text-blue-800'
-                        } transition-colors duration-150`}
-                        onClick={() => handleProviderSelection(type)}>
-                        <span className="font-medium">{getDefaultDisplayNameFromProviderId(type)}</span>
-                      </button>
-                    ))}
-
-                  {/* Custom provider button (always shown) */}
-                  <button
-                    type="button"
-                    className={`flex w-full items-center px-4 py-3 text-left text-sm ${
-                      isDarkMode
-                        ? 'text-blue-200 hover:bg-blue-600/30 hover:text-white'
-                        : 'text-blue-700 hover:bg-blue-100 hover:text-blue-800'
-                    } transition-colors duration-150`}
-                    onClick={() => handleProviderSelection(ProviderTypeEnum.CustomOpenAI)}>
-                    <span className="font-medium">{t('options_models_providers_openaiCompatible')}</span>
-                  </button>
-                </div>
-              </div>
-            )}
+            <ProviderSelector
+              isDarkMode={isDarkMode}
+              isOpen={isProviderSelectorOpen}
+              onSelect={handleProviderSelection}
+              providersFromStorage={providersFromStorage}
+              modifiedProviders={modifiedProviders}
+            />
           </div>
         </div>
       </div>
@@ -1628,7 +1591,7 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
           {t('options_models_selection_header')}
         </h2>
         <div className="space-y-4">
-          {[AgentNameEnum.Planner, AgentNameEnum.Navigator].map(agentName => (
+          {[AgentNameEnum.thinker, AgentNameEnum.Navigator].map(agentName => (
             <div key={agentName}>{renderModelSelect(agentName)}</div>
           ))}
         </div>

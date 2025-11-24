@@ -434,8 +434,8 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
         if (this.context.paused || this.context.stopped) {
           return results;
         }
-        // TODO: wait for 1 second for now, need to optimize this to avoid unnecessary waiting
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Wait for 300ms instead of 1 second for faster execution
+        await new Promise(resolve => setTimeout(resolve, 300));
       } catch (error) {
         if (error instanceof URLNotAllowedError) {
           throw error;
@@ -450,9 +450,18 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
         // unexpected error, emit event
         this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_FAIL, errorMessage);
         errCount++;
+
+        // Fail faster - only allow 3 errors instead of 8
         if (errCount > 3) {
+          logger.error(`Too many errors (${errCount}) - stopping action execution`);
           throw new Error('Too many errors in actions');
         }
+
+        // Only log first error to reduce spam
+        if (errCount === 1) {
+          logger.warning(`Action error (${errCount}/3): ${errorMessage}`);
+        }
+
         results.push(
           new ActionResult({
             error: errorMessage,
@@ -460,6 +469,9 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
             includeInMemory: true,
           }),
         );
+
+        // Reduce wait time after error - 500ms instead of 1500ms
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
     return results;

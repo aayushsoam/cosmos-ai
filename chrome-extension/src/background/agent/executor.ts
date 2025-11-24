@@ -2,9 +2,9 @@ import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { type ActionResult, AgentContext, type AgentOptions, type AgentOutput } from './types';
 import { t } from '@extension/i18n';
 import { NavigatorAgent, NavigatorActionRegistry } from './agents/navigator';
-import { PlannerAgent, type PlannerOutput } from './agents/planner';
+import { thinkerAgent, type thinkerOutput } from './agents/thinker';
 import { NavigatorPrompt } from './prompts/navigator';
-import { PlannerPrompt } from './prompts/planner';
+import { thinkerPrompt } from './prompts/thinker';
 import { createLogger } from '@src/background/log';
 import MessageManager from './messages/service';
 import type BrowserContext from '../browser/context';
@@ -29,7 +29,7 @@ import { analytics } from '../services/analytics';
 const logger = createLogger('Executor');
 
 export interface ExecutorExtraArgs {
-  plannerLLM?: BaseChatModel;
+  thinkerLLM?: BaseChatModel;
   extractorLLM?: BaseChatModel;
   agentOptions?: Partial<AgentOptions>;
   generalSettings?: GeneralSettingsConfig;
@@ -37,9 +37,9 @@ export interface ExecutorExtraArgs {
 
 export class Executor {
   private readonly navigator: NavigatorAgent;
-  private readonly planner: PlannerAgent;
+  private readonly thinker: thinkerAgent;
   private readonly context: AgentContext;
-  private readonly plannerPrompt: PlannerPrompt;
+  private readonly thinkerPrompt: thinkerPrompt;
   private readonly navigatorPrompt: NavigatorPrompt;
   private readonly generalSettings: GeneralSettingsConfig | undefined;
   private tasks: string[] = [];
@@ -52,7 +52,7 @@ export class Executor {
   ) {
     const messageManager = new MessageManager();
 
-    const plannerLLM = extraArgs?.plannerLLM ?? navigatorLLM;
+    const thinkerLLM = extraArgs?.thinkerLLM ?? navigatorLLM;
     const extractorLLM = extraArgs?.extractorLLM ?? navigatorLLM;
     const eventManager = new EventManager();
     const context = new AgentContext(
@@ -66,7 +66,7 @@ export class Executor {
     this.generalSettings = extraArgs?.generalSettings;
     this.tasks.push(task);
     this.navigatorPrompt = new NavigatorPrompt(context.options.maxActionsPerStep);
-    this.plannerPrompt = new PlannerPrompt();
+    this.thinkerPrompt = new thinkerPrompt();
 
     const actionBuilder = new ActionBuilder(context, extractorLLM);
     const navigatorActionRegistry = new NavigatorActionRegistry(actionBuilder.buildDefaultActions());
@@ -78,10 +78,10 @@ export class Executor {
       prompt: this.navigatorPrompt,
     });
 
-    this.planner = new PlannerAgent({
-      chatLLM: plannerLLM,
+    this.thinker = new thinkerAgent({
+      chatLLM: thinkerLLM,
       context: context,
-      prompt: this.plannerPrompt,
+      prompt: this.thinkerPrompt,
     });
 
     this.context = context;
@@ -107,11 +107,11 @@ export class Executor {
   }
 
   /**
-   * Check if task is complete based on planner output and handle completion
+   * Check if task is complete based on thinker output and handle completion
    */
-  private checkTaskCompletion(planOutput: AgentOutput<PlannerOutput> | null): boolean {
+  private checkTaskCompletion(planOutput: AgentOutput<thinkerOutput> | null): boolean {
     if (planOutput?.result?.done) {
-      logger.info('✅ Planner confirms task completion');
+      logger.info('✅ thinker confirms task completion');
       if (planOutput.result.final_answer) {
         this.context.finalAnswer = planOutput.result.final_answer;
       }
@@ -139,7 +139,7 @@ export class Executor {
       void analytics.trackTaskStart(this.context.taskId);
 
       let step = 0;
-      let latestPlanOutput: AgentOutput<PlannerOutput> | null = null;
+      let latestPlanOutput: AgentOutput<thinkerOutput> | null = null;
       let navigatorDone = false;
 
       for (step = 0; step < allowedMaxSteps; step++) {
@@ -153,12 +153,12 @@ export class Executor {
           break;
         }
 
-        // Run planner periodically for guidance
-        if (this.planner && (context.nSteps % context.options.planningInterval === 0 || navigatorDone)) {
+        // Run thinker periodically for guidance
+        if (this.thinker && (context.nSteps % context.options.planningInterval === 0 || navigatorDone)) {
           navigatorDone = false;
-          latestPlanOutput = await this.runPlanner();
+          latestPlanOutput = await this.runthinker();
 
-          // Check if task is complete after planner run
+          // Check if task is complete after thinker run
           if (this.checkTaskCompletion(latestPlanOutput)) {
             break;
           }
@@ -167,9 +167,9 @@ export class Executor {
         // Execute navigator
         navigatorDone = await this.navigate();
 
-        // If navigator indicates completion, the next periodic planner run will validate it
+        // If navigator indicates completion, the next periodic thinker run will validate it
         if (navigatorDone) {
-          logger.info('🔄 Navigator indicates completion - will be validated by next planner run');
+          logger.info('🔄 Navigator indicates completion - will be validated by next thinker run');
         }
       }
 
@@ -230,9 +230,9 @@ export class Executor {
   }
 
   /**
-   * Helper method to run planner and store its output
+   * Helper method to run thinker and store its output
    */
-  private async runPlanner(): Promise<AgentOutput<PlannerOutput> | null> {
+  private async runthinker(): Promise<AgentOutput<thinkerOutput> | null> {
     const context = this.context;
     try {
       // Add current browser state to memory
@@ -244,14 +244,14 @@ export class Executor {
         positionForPlan = this.context.messageManager.length();
       }
 
-      // Execute planner
-      const planOutput = await this.planner.execute();
+      // Execute thinker
+      const planOutput = await this.thinker.execute();
       if (planOutput.result) {
         this.context.messageManager.addPlan(JSON.stringify(planOutput.result), positionForPlan);
       }
       return planOutput;
     } catch (error) {
-      logger.error(`Failed to execute planner: ${error}`);
+      logger.error(`Failed to execute thinker: ${error}`);
       if (
         error instanceof ChatModelAuthError ||
         error instanceof ChatModelBadRequestError ||
@@ -263,7 +263,7 @@ export class Executor {
         throw error;
       }
       context.consecutiveFailures++;
-      logger.error(`Failed to execute planner: ${error}`);
+      logger.error(`Failed to execute thinker: ${error}`);
       if (context.consecutiveFailures >= context.options.maxFailures) {
         throw new MaxFailuresReachedError(t('exec_errors_maxFailuresReached'));
       }
@@ -286,8 +286,15 @@ export class Executor {
       }
       context.nSteps++;
       if (navOutput.error) {
-        throw new Error(navOutput.error);
+        // Don't throw immediately - treat as a failed step but continue
+        logger.warning(`Navigator step failed: ${navOutput.error}`);
+        context.consecutiveFailures++;
+        if (context.consecutiveFailures >= context.options.maxFailures) {
+          throw new MaxFailuresReachedError(t('exec_errors_maxFailuresReached'));
+        }
+        return false;
       }
+      // Reset failure counter on successful step
       context.consecutiveFailures = 0;
       if (navOutput.result?.done) {
         return true;
@@ -300,12 +307,13 @@ export class Executor {
         error instanceof ChatModelForbiddenError ||
         error instanceof URLNotAllowedError ||
         error instanceof RequestCancelledError ||
-        error instanceof ExtensionConflictError
+        error instanceof ExtensionConflictError ||
+        error instanceof MaxFailuresReachedError
       ) {
         throw error;
       }
       context.consecutiveFailures++;
-      logger.error(`Failed to execute step: ${error}`);
+      logger.warning(`Navigator error ${context.consecutiveFailures}/${context.options.maxFailures} - continuing`);
       if (context.consecutiveFailures >= context.options.maxFailures) {
         throw new MaxFailuresReachedError(t('exec_errors_maxFailuresReached'));
       }

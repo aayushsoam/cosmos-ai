@@ -15,7 +15,7 @@ export interface AgentOptions {
   maxInputTokens: number;
   maxErrorLength: number;
   useVision: boolean;
-  useVisionForPlanner: boolean;
+  useVisionForthinker: boolean;
   includeAttributes: string[];
   planningInterval: number;
 }
@@ -23,14 +23,14 @@ export interface AgentOptions {
 export const DEFAULT_AGENT_OPTIONS: AgentOptions = {
   maxSteps: 100,
   maxActionsPerStep: 10,
-  maxFailures: 3,
+  maxFailures: 10,
   retryDelay: 10,
   maxInputTokens: 128000,
   maxErrorLength: 400,
   useVision: false,
-  useVisionForPlanner: true,
+  useVisionForthinker: true,
   includeAttributes: DEFAULT_INCLUDE_ATTRIBUTES,
-  planningInterval: 3,
+  planningInterval: 5,
 };
 
 export class AgentContext {

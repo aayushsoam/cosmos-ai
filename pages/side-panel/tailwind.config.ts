@@ -3,6 +3,7 @@ import type { Config } from 'tailwindcss/types/config';
 
 export default {
   ...baseConfig,
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {

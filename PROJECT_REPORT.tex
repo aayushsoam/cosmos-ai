@@ -1,0 +1,531 @@
+\documentclass[12pt,a4paper]{article}
+
+% Packages
+\usepackage[top=1in, bottom=1in, left=1.25in, right=1.25in]{geometry}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{array}
+\usepackage{booktabs}
+
+% Font settings
+\renewcommand{\familydefault}{\ttdefault}
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+
+% Page style
+\pagestyle{fancy}
+\fancyhf{}
+\rfoot{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+% Title formatting
+\title{}
+\author{}
+\date{}
+
+\begin{document}
+
+% Cover Page
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\fontsize{18}{22}\selectfont\textbf{PROJECT REPORT}}
+    
+    \vspace{1.5cm}
+    
+    {\fontsize{16}{20}\selectfont\textbf{COSMOS: AI WEB AUTOMATION TOOL}}
+    
+    \vspace{1.5cm}
+    
+    {\fontsize{14}{18}\selectfont An Open-Source Browser Extension for Intelligent Web Automation}
+    
+    \vspace{3cm}
+    
+    {\fontsize{12}{14}\selectfont
+    \textbf{Project Type:} Chrome Extension Development \\
+    \vspace{0.5cm}
+    \textbf{Technology Stack:} React, TypeScript, Vite, Tailwind CSS \\
+    \vspace{0.5cm}
+    \textbf{Development Framework:} Monorepo (pnpm workspaces, Turbo) \\
+    }
+    
+    \vspace{3cm}
+    
+    {\fontsize{12}{14}\selectfont
+    \textbf{Project Status:} Completed and Deployed \\
+    \vspace{0.5cm}
+    \textbf{Version:} 0.1.12 \\
+    }
+    
+    \vfill
+    
+    {\fontsize{12}{14}\selectfont
+    \textit{Available on Chrome Web Store} \\
+    \vspace{0.3cm}
+    Repository: github.com/cosmos/cosmos \\
+    }
+    
+\end{titlepage}
+
+% Table of Contents
+\newpage
+\tableofcontents
+\newpage
+
+% 1. INTRODUCTION
+\section*{\textbf{1. INTRODUCTION}}
+\addcontentsline{toc}{section}{1. Introduction}
+
+\setlength{\parindent}{0.5in}
+
+Cosmos is an open-source AI web automation tool designed to run directly in the browser as a Chrome extension. It provides a free and privacy-focused alternative to commercial solutions like OpenAI Operator, enabling users to automate complex web workflows using artificial intelligence without sacrificing data privacy or incurring substantial subscription costs.
+
+The tool leverages a multi-agent system architecture where specialized AI agents collaborate to accomplish intricate web automation tasks. The primary agents include a Navigator agent for web interaction and a Thinker agent for reasoning and planning. Users can connect their preferred Large Language Model (LLM) providers including OpenAI, Anthropic, Gemini, Ollama, Groq, Cerebras, and Llama, providing flexibility in model selection and cost optimization.
+
+Key characteristics of Cosmos include:
+
+\begin{itemize}
+    \item \textbf{100\% Free and Open Source:} No subscription fees; users only pay for their own API usage
+    \item \textbf{Privacy-Centric Design:} All processing occurs locally within the browser; user credentials and data never leave the local machine
+    \item \textbf{Multi-Agent Architecture:} Specialized agents work collaboratively to handle complex web automation scenarios
+    \item \textbf{Flexible LLM Integration:} Support for multiple LLM providers with independent model selection for different agents
+    \item \textbf{Interactive Interface:} Side panel chat interface with real-time status updates and conversation history
+    \item \textbf{Cross-Browser Compatibility:} Full support for Chrome and Edge browsers
+\end{itemize}
+
+The project is built using modern web technologies including React 18, TypeScript, Vite, and Tailwind CSS, organized as a monorepo using pnpm workspaces and Turbo for efficient build management. The extension is actively maintained and available for download from the Chrome Web Store.
+
+\vspace{0.5cm}
+
+% 2. OBJECTIVES OF THE STUDY
+\section*{\textbf{2. OBJECTIVES OF THE STUDY}}
+\addcontentsline{toc}{section}{2. Objectives of the Study}
+
+The primary objectives of developing the Cosmos project are:
+
+\begin{enumerate}
+    \item \textbf{Democratize Web Automation:} Create an accessible, free alternative to expensive commercial web automation tools, making advanced AI capabilities available to developers and non-technical users alike.
+    
+    \item \textbf{Ensure User Privacy:} Design a system where all data processing occurs locally within the user's browser, eliminating the need to share sensitive information with cloud services.
+    
+    \item \textbf{Provide Flexibility:} Enable users to select and configure their preferred LLM providers and models, allowing cost optimization and performance tuning based on individual requirements.
+    
+    \item \textbf{Implement Multi-Agent Collaboration:} Develop a sophisticated multi-agent system where specialized agents can reason, plan, and execute web automation tasks with self-correction capabilities.
+    
+    \item \textbf{Create an Intuitive User Interface:} Design an interactive side panel interface that provides real-time feedback, conversation history, and easy configuration of automation tasks.
+    
+    \item \textbf{Maintain Code Quality and Transparency:} Establish a fully open-source project with clear documentation, contributing guidelines, and community engagement mechanisms.
+    
+    \item \textbf{Support Complex Web Workflows:} Enable automation of sophisticated web tasks including data extraction, form filling, navigation, and multi-step workflows across various websites.
+    
+    \item \textbf{Optimize Performance and Cost:} Provide configuration options for different model combinations to balance performance requirements with API costs.
+\end{enumerate}
+
+\vspace{0.5cm}
+
+% 3. DETAILED METHODOLOGY
+\section*{\textbf{3. DETAILED METHODOLOGY USED FOR CARRYING OUT THE STUDY}}
+\addcontentsline{toc}{section}{3. Detailed Methodology}
+
+\subsection*{\textbf{3.1 Architecture Design}}
+
+The Cosmos project employs a modular monorepo architecture with the following structure:
+
+\begin{itemize}
+    \item \textbf{Chrome Extension Core:} The main extension package containing the background service worker, content scripts, and popup interface
+    \item \textbf{Shared Utilities:} Common utilities, schemas, and configuration shared across packages
+    \item \textbf{UI Components:} Reusable React components styled with Tailwind CSS
+    \item \textbf{Storage Management:} Local storage abstraction for persisting user configurations and conversation history
+    \item \textbf{Internationalization (i18n):} Multi-language support infrastructure
+    \item \textbf{Development Tools:} Build utilities, TypeScript configuration, and Vite configuration
+\end{itemize}
+
+\subsection*{\textbf{3.2 Technology Stack}}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Component} & \textbf{Technology} \\
+\hline
+Frontend Framework & React 18.3.1 \\
+\hline
+Language & TypeScript 5.5.4 \\
+\hline
+Build Tool & Vite 6.3.6 \\
+\hline
+Styling & Tailwind CSS 3.4.17 \\
+\hline
+Package Manager & pnpm 9.15.1 \\
+\hline
+Monorepo Tool & Turbo 2.5.3 \\
+\hline
+Runtime & Node.js 22.12.0+ \\
+\hline
+Browser Target & Chrome/Edge (Manifest V3) \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection*{\textbf{3.3 Development Workflow}}
+
+\begin{enumerate}
+    \item \textbf{Environment Setup:} Installation of Node.js, pnpm, and project dependencies using \texttt{pnpm install}
+    
+    \item \textbf{Development Mode:} Running \texttt{pnpm dev} to start the development server with hot module replacement (HMR)
+    
+    \item \textbf{Code Quality:} Implementation of ESLint for code linting and Prettier for code formatting with pre-commit hooks via Husky
+    
+    \item \textbf{Type Checking:} TypeScript compilation with strict type checking enabled
+    
+    \item \textbf{Build Process:} Production build using \texttt{pnpm build} which:
+    \begin{itemize}
+        \item Cleans previous bundles
+        \item Runs Turbo build pipeline across all packages
+        \item Generates optimized extension files in the \texttt{dist} directory
+    \end{itemize}
+    
+    \item \textbf{Packaging:} Creation of \texttt{cosmos.zip} for distribution using \texttt{pnpm zip}
+    
+    \item \textbf{Testing:} End-to-end testing with \texttt{pnpm e2e}
+    
+    \item \textbf{Version Management:} Automated version updates using \texttt{update\_version.sh}
+\end{enumerate}
+
+\subsection*{\textbf{3.4 Multi-Agent System Implementation}}
+
+The core automation engine uses a multi-agent architecture:
+
+\begin{itemize}
+    \item \textbf{Navigator Agent:} Handles direct browser interaction including DOM manipulation, form filling, and element clicking
+    
+    \item \textbf{Thinker Agent:} Performs reasoning, planning, and task decomposition; provides self-correction when navigation fails
+    
+    \item \textbf{Agent Communication:} Agents exchange information through a message-passing system with context preservation
+    
+    \item \textbf{LLM Integration:} Each agent can be configured with different LLM providers and models for optimal performance
+\end{itemize}
+
+\subsection*{\textbf{3.5 User Interface Development}}
+
+\begin{itemize}
+    \item \textbf{Side Panel Interface:} Interactive chat-based UI for task input and real-time status updates
+    
+    \item \textbf{Settings Configuration:} User interface for managing LLM API keys and model selection
+    
+    \item \textbf{Conversation History:} Persistent storage and retrieval of previous automation tasks and results
+    
+    \item \textbf{Responsive Design:} Tailwind CSS-based responsive layout compatible with various screen sizes
+\end{itemize}
+
+\subsection*{\textbf{3.6 Integration and Deployment}}
+
+\begin{itemize}
+    \item \textbf{Chrome Web Store:} Distribution through official Chrome Web Store with automated review process
+    
+    \item \textbf{Manual Installation:} Support for developer installations via unpacked extension loading
+    
+    \item \textbf{Version Control:} Git-based version control with GitHub as the primary repository
+    
+    \item \textbf{Community Support:} Discord server and GitHub Discussions for user support and feature requests
+\end{itemize}
+
+\vspace{0.5cm}
+
+% 4. EXPECTED CONTRIBUTION
+\section*{\textbf{4. EXPECTED CONTRIBUTION FROM THE STUDY}}
+\addcontentsline{toc}{section}{4. Expected Contribution}
+
+The Cosmos project makes significant contributions to the field of web automation and AI integration:
+
+\begin{enumerate}
+    \item \textbf{Democratization of AI Capabilities:} Provides free, open-source access to advanced web automation capabilities previously available only through expensive commercial solutions, reducing barriers to entry for developers and organizations.
+    
+    \item \textbf{Privacy-First Architecture:} Demonstrates a practical implementation of privacy-preserving AI where all processing occurs locally, establishing a model for responsible AI deployment in browser extensions.
+    
+    \item \textbf{Open-Source Innovation:} Contributes to the open-source ecosystem by providing a fully transparent, community-driven alternative to proprietary solutions, enabling community contributions and improvements.
+    
+    \item \textbf{Multi-Agent System Reference:} Serves as a reference implementation for multi-agent AI systems in browser environments, demonstrating effective collaboration between specialized agents.
+    
+    \item \textbf{LLM Flexibility Framework:} Establishes patterns for flexible LLM integration allowing users to choose providers and models, providing a template for other applications requiring LLM flexibility.
+    
+    \item \textbf{Developer Education:} Through comprehensive documentation and open-source code, educates developers about Chrome extension development, React patterns, TypeScript best practices, and AI integration techniques.
+    
+    \item \textbf{Real-World Use Cases:} Enables practical automation of repetitive web tasks including news aggregation, research, shopping, data extraction, and form automation.
+    
+    \item \textbf{Community-Driven Development:} Establishes a collaborative community through Discord, GitHub Discussions, and contribution guidelines, fostering collective innovation and knowledge sharing.
+\end{enumerate}
+
+\vspace{0.5cm}
+
+% 5. ACTIVITIES AND TIMELINE
+\section*{\textbf{5. LIST OF ACTIVITIES CARRIED OUT TO COMPLETE THE PROJECT}}
+\addcontentsline{toc}{section}{5. Activities and Timeline}
+
+\subsection*{\textbf{5.1 Project Activities}}
+
+The following activities were executed to complete the Cosmos project:
+
+\begin{enumerate}
+    \item \textbf{Requirements Analysis and Planning} (Phase 1)
+    \begin{itemize}
+        \item Identified user needs for web automation
+        \item Defined core features and functionality
+        \item Designed multi-agent architecture
+        \item Planned technology stack selection
+    \end{itemize}
+    
+    \item \textbf{Architecture and Design} (Phase 2)
+    \begin{itemize}
+        \item Designed monorepo structure with pnpm workspaces
+        \item Planned Chrome extension manifest configuration
+        \item Designed multi-agent communication protocol
+        \item Created UI/UX mockups and specifications
+    \end{itemize}
+    
+    \item \textbf{Core Development} (Phase 3)
+    \begin{itemize}
+        \item Implemented background service worker
+        \item Developed content scripts for DOM interaction
+        \item Built React-based side panel interface
+        \item Implemented multi-agent system logic
+    \end{itemize}
+    
+    \item \textbf{LLM Integration} (Phase 4)
+    \begin{itemize}
+        \item Integrated OpenAI API support
+        \item Added Anthropic Claude support
+        \item Implemented Gemini integration
+        \item Added Ollama and custom provider support
+    \end{itemize}
+    
+    \item \textbf{UI/UX Implementation} (Phase 5)
+    \begin{itemize}
+        \item Developed interactive side panel
+        \item Created settings configuration interface
+        \item Implemented conversation history management
+        \item Built real-time status update system
+    \end{itemize}
+    
+    \item \textbf{Testing and Quality Assurance} (Phase 6)
+    \begin{itemize}
+        \item Conducted unit testing
+        \item Performed integration testing
+        \item Executed end-to-end testing
+        \item Tested across Chrome and Edge browsers
+    \end{itemize}
+    
+    \item \textbf{Documentation} (Phase 7)
+    \begin{itemize}
+        \item Created comprehensive README
+        \item Wrote API documentation
+        \item Developed contributing guidelines
+        \item Created deployment checklist
+    \end{itemize}
+    
+    \item \textbf{Deployment and Release} (Phase 8)
+    \begin{itemize}
+        \item Submitted to Chrome Web Store
+        \item Completed Web Store review process
+        \item Published official release
+        \item Set up continuous deployment pipeline
+    \end{itemize}
+    
+    \item \textbf{Community Building} (Phase 9)
+    \begin{itemize}
+        \item Established Discord community
+        \item Created GitHub Discussions forum
+        \item Engaged with early users
+        \item Gathered feedback for improvements
+    \end{itemize}
+    
+    \item \textbf{Maintenance and Iteration} (Phase 10)
+    \begin{itemize}
+        \item Fixed reported bugs
+        \item Implemented user-requested features
+        \item Optimized performance
+        \item Released version updates
+    \end{itemize}
+\end{enumerate}
+
+\subsection*{\textbf{5.2 Project Timeline Chart}}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+    \begin{axis}[
+        xbar,
+        y axis line style = { opacity = 0 },
+        axis x line       = none,
+        tickwidth         = 0pt,
+        enlarge y limits  = 0.5,
+        enlarge x limits  = 0.02,
+        symbolic y coords = {
+            Phase 1,
+            Phase 2,
+            Phase 3,
+            Phase 4,
+            Phase 5,
+            Phase 6,
+            Phase 7,
+            Phase 8,
+            Phase 9,
+            Phase 10
+        },
+        nodes near coords,
+        nodes near coords align=horizontal,
+    ]
+        \addplot coordinates {
+            (8, Phase 1)
+            (12, Phase 2)
+            (20, Phase 3)
+            (15, Phase 4)
+            (18, Phase 5)
+            (14, Phase 6)
+            (10, Phase 7)
+            (8, Phase 8)
+            (6, Phase 9)
+            (10, Phase 10)
+        };
+    \end{axis}
+\end{tikzpicture}
+
+\textit{Figure 1: Project Activities Timeline (Duration in Days)}
+\end{center}
+
+\vspace{0.5cm}
+
+% 6. TOOLS AND EQUIPMENT
+\section*{\textbf{6. PLACES/LABS/EQUIPMENT AND TOOLS USED}}
+\addcontentsline{toc}{section}{6. Tools and Equipment}
+
+\subsection*{\textbf{6.1 Development Environment}}
+
+\begin{itemize}
+    \item \textbf{Operating Systems:} Windows, macOS, Linux
+    \item \textbf{Code Editors:} Visual Studio Code, WebStorm
+    \item \textbf{Browsers:} Google Chrome (v120+), Microsoft Edge (v120+)
+    \item \textbf{Terminal/Shell:} Bash, PowerShell, Zsh
+\end{itemize}
+
+\subsection*{\textbf{6.2 Development Tools}}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|p{4cm}|}
+\hline
+\textbf{Tool} & \textbf{Version} & \textbf{Purpose} \\
+\hline
+Node.js & 22.12.0+ & JavaScript runtime \\
+\hline
+pnpm & 9.15.1 & Package manager \\
+\hline
+Turbo & 2.5.3 & Monorepo build orchestration \\
+\hline
+Vite & 6.3.6 & Build tool and dev server \\
+\hline
+TypeScript & 5.5.4 & Type-safe JavaScript \\
+\hline
+ESLint & 8.57.0 & Code linting \\
+\hline
+Prettier & 3.3.3 & Code formatting \\
+\hline
+Husky & 9.1.4 & Git hooks management \\
+\hline
+Tailwind CSS & 3.4.17 & Utility-first CSS \\
+\hline
+React & 18.3.1 & UI framework \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection*{\textbf{6.3 External Services and APIs}}
+
+\begin{itemize}
+    \item \textbf{OpenAI API:} GPT-4, GPT-4o, GPT-4o-mini models
+    \item \textbf{Anthropic API:} Claude Sonnet, Claude Haiku models
+    \item \textbf{Google Gemini API:} Gemini 2.5 Flash model
+    \item \textbf{Groq API:} High-speed LLM inference
+    \item \textbf{Cerebras API:} Large-scale model inference
+    \item \textbf{Ollama:} Local LLM deployment
+    \item \textbf{Chrome Web Store:} Extension distribution platform
+    \item \textbf{GitHub:} Version control and repository hosting
+    \item \textbf{Discord:} Community communication platform
+\end{itemize}
+
+\subsection*{\textbf{6.4 Development Practices and Standards}}
+
+\begin{itemize}
+    \item \textbf{Version Control:} Git with GitHub for collaborative development
+    \item \textbf{Code Quality:} ESLint configuration following Airbnb standards
+    \item \textbf{Code Formatting:} Prettier with consistent formatting rules
+    \item \textbf{Pre-commit Hooks:} Husky for automated linting and formatting
+    \item \textbf{Type Safety:} Strict TypeScript configuration
+    \item \textbf{Documentation:} Markdown-based documentation with code examples
+    \item \textbf{Testing:} Automated testing pipeline with end-to-end tests
+\end{itemize}
+
+\subsection*{\textbf{6.5 Deployment Infrastructure}}
+
+\begin{itemize}
+    \item \textbf{Chrome Web Store:} Official distribution channel
+    \item \textbf{GitHub Releases:} Direct download of extension packages
+    \item \textbf{GitHub Pages:} Documentation hosting
+    \item \textbf{CI/CD Pipeline:} Automated build and deployment workflows
+\end{itemize}
+
+\vspace{0.5cm}
+
+% 7. REFERENCES
+\section*{\textbf{7. REFERENCES}}
+\addcontentsline{toc}{section}{7. References}
+
+\setlength{\parindent}{0pt}
+\setlength{\leftskip}{0.5in}
+\setlength{\parskip}{0.3cm}
+
+\noindent Anthropic. (2024). Claude API Documentation. Retrieved from https://docs.anthropic.com
+
+\noindent Browser Use. (2024). Browser Use - Open Source Browser Automation. Retrieved from https://github.com/browser-use/browser-use
+
+\noindent Chrome Extension Boilerplate. (2024). Chrome Extension Boilerplate React Vite. Retrieved from https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite
+
+\noindent Cosmos Team. (2024). Cosmos - AI Web Automation Tool. Retrieved from https://github.com/cosmos/cosmos
+
+\noindent Discord. (2024). Discord Developer Documentation. Retrieved from https://discord.com/developers/docs
+
+\noindent Emergence AI. (2024). Agent-E - Browser Automation. Retrieved from https://github.com/EmergenceAI/Agent-E
+
+\noindent Google. (2024). Chrome Extension Manifest V3 Documentation. Retrieved from https://developer.chrome.com/docs/extensions/mv3/
+
+\noindent Google. (2024). Google Gemini API Documentation. Retrieved from https://ai.google.dev/docs
+
+\noindent Groq. (2024). Groq API Documentation. Retrieved from https://console.groq.com/docs
+
+\noindent LangChain. (2024). LangChain JavaScript Documentation. Retrieved from https://js.langchain.com
+
+\noindent Meta. (2024). React 18 Documentation. Retrieved from https://react.dev
+
+\noindent Microsoft. (2024). TypeScript Handbook. Retrieved from https://www.typescriptlang.org/docs
+
+\noindent OpenAI. (2024). OpenAI API Documentation. Retrieved from https://platform.openai.com/docs
+
+\noindent pnpm. (2024). pnpm Documentation. Retrieved from https://pnpm.io
+
+\noindent Puppeteer. (2024). Puppeteer - Headless Browser Automation. Retrieved from https://pptr.dev
+
+\noindent Tailwind Labs. (2024). Tailwind CSS Documentation. Retrieved from https://tailwindcss.com/docs
+
+\noindent The Turbo Team. (2024). Turbo Monorepo Tool Documentation. Retrieved from https://turbo.build
+
+\noindent Vite Team. (2024). Vite Documentation. Retrieved from https://vitejs.dev
+
+\noindent Vercel. (2024). Husky - Git Hooks. Retrieved from https://typicode.github.io/husky
+
+\end{document}

@@ -16,6 +16,7 @@ interface ChatInputProps {
   // Historical session ID - if provided, shows replay button instead of send button
   historicalSessionId?: string | null;
   onReplay?: (sessionId: string) => void;
+  onCurrentTabClick?: () => void; // Handler for Current tab button
 }
 
 // File attachment interface
@@ -37,6 +38,7 @@ export default function ChatInput({
   isDarkMode = false,
   historicalSessionId,
   onReplay,
+  onCurrentTabClick,
 }: ChatInputProps) {
   const [text, setText] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
@@ -185,20 +187,55 @@ export default function ChatInput({
   return (
     <form
       onSubmit={handleSubmit}
-      className={`overflow-hidden rounded-lg border transition-colors ${disabled ? 'cursor-not-allowed' : 'focus-within:border-sky-400 hover:border-sky-400'} ${isDarkMode ? 'border-slate-700' : ''}`}
+      className={`overflow-hidden rounded-xl border transition-all ${disabled ? 'cursor-not-allowed' : 'focus-within:border-white hover:border-white'} ${isDarkMode ? 'border-white bg-black' : ''}`}
       aria-label={t('chat_input_form')}>
       <div className="flex flex-col">
+        {/* Top bar with @Add Context and Current tab buttons */}
+        <div
+          className={`flex items-center gap-2 border-b px-2 py-1.5 ${
+            isDarkMode ? 'border-white bg-black' : 'border-gray-200 bg-gray-50'
+          }`}>
+          <button
+            type="button"
+            onClick={handleFileSelect}
+            disabled={disabled}
+            className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition-all ${
+              disabled
+                ? 'cursor-not-allowed opacity-50'
+                : isDarkMode
+                  ? 'border-white bg-black text-white hover:bg-white hover:text-black'
+                  : 'text-gray-600 hover:bg-gray-200 hover:text-gray-800'
+            }`}>
+            <span className="text-sm">@</span>
+            <span>Add Context</span>
+          </button>
+          <button
+            type="button"
+            onClick={onCurrentTabClick}
+            disabled={disabled}
+            className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition-all ${
+              disabled
+                ? 'cursor-not-allowed opacity-50'
+                : isDarkMode
+                  ? 'border-white bg-black text-white hover:bg-white hover:text-black'
+                  : 'text-gray-600 hover:bg-gray-200 hover:text-gray-800'
+            }`}>
+            <span className="text-sm">📄</span>
+            <span>Current tab</span>
+          </button>
+        </div>
+
         {/* File attachments display */}
         {attachedFiles.length > 0 && (
           <div
             className={`flex flex-wrap gap-2 border-b p-2 ${
-              isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-gray-50'
+              isDarkMode ? 'border-white bg-black' : 'border-gray-200 bg-gray-50'
             }`}>
             {attachedFiles.map((file, index) => (
               <div
                 key={index}
-                className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs ${
-                  isDarkMode ? 'bg-slate-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-xs ${
+                  isDarkMode ? 'border-white bg-black text-white' : 'bg-gray-200 text-gray-700'
                 }`}>
                 <span className="text-xs">📎</span>
                 <span className="max-w-[150px] truncate">{file.name}</span>
@@ -224,51 +261,46 @@ export default function ChatInput({
           disabled={disabled}
           aria-disabled={disabled}
           rows={5}
-          className={`w-full resize-none border-none p-2 focus:outline-none ${
+          className={`w-full resize-none border-none p-3 focus:outline-none ${
             disabled
               ? isDarkMode
-                ? 'cursor-not-allowed bg-slate-800 text-gray-400'
+                ? 'cursor-not-allowed bg-black text-gray-500'
                 : 'cursor-not-allowed bg-gray-100 text-gray-500'
               : isDarkMode
-                ? 'bg-slate-800 text-gray-200'
+                ? 'bg-black text-white placeholder:text-gray-500'
                 : 'bg-white'
           }`}
           placeholder={attachedFiles.length > 0 ? 'Add a message (optional)...' : t('chat_input_placeholder')}
           aria-label={t('chat_input_editor')}
         />
 
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept=".txt,.md,.markdown,.json,.csv,.log,.xml,.yaml,.yml"
+          onChange={handleFileChange}
+          className="hidden"
+          aria-hidden="true"
+        />
+
         <div
-          className={`flex items-center justify-between px-2 py-1.5 ${
-            disabled ? (isDarkMode ? 'bg-slate-800' : 'bg-gray-100') : isDarkMode ? 'bg-slate-800' : 'bg-white'
+          className={`flex items-center justify-between border-t px-3 py-2 ${
+            disabled
+              ? isDarkMode
+                ? 'border-white bg-black'
+                : 'bg-gray-100'
+              : isDarkMode
+                ? 'border-white bg-black'
+                : 'bg-white'
           }`}>
           <div className="flex gap-2 text-gray-500">
-            {/* File attachment button */}
-            <button
-              type="button"
-              onClick={handleFileSelect}
-              disabled={disabled}
-              aria-label="Attach files"
-              title="Attach text files (txt, md, json, csv, etc.)"
-              className={`rounded-md p-1.5 transition-colors ${
-                disabled
-                  ? 'cursor-not-allowed opacity-50'
-                  : isDarkMode
-                    ? 'text-gray-400 hover:bg-slate-700 hover:text-gray-200'
-                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-              }`}>
-              <span className="text-lg">📎</span>
-            </button>
-
-            {/* Hidden file input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept=".txt,.md,.markdown,.json,.csv,.log,.xml,.yaml,.yml"
-              onChange={handleFileChange}
-              className="hidden"
-              aria-hidden="true"
-            />
+            {/* Agent icon */}
+            <div className="flex items-center gap-1.5 px-1">
+              <span className="text-sm">😊</span>
+              <span className={`text-xs ${isDarkMode ? 'text-white' : 'text-gray-600'}`}>Agent</span>
+            </div>
 
             {onMicClick && (
               <button
@@ -282,13 +314,13 @@ export default function ChatInput({
                       ? t('chat_stt_recording_stop')
                       : t('chat_stt_input_start')
                 }
-                className={`rounded-md p-1.5 transition-colors ${
+                className={`rounded-lg border p-2 transition-all ${
                   disabled || isProcessingSpeech
                     ? 'cursor-not-allowed opacity-50'
                     : isRecording
-                      ? 'bg-red-500 text-white hover:bg-red-600'
+                      ? 'border-white bg-red-500 text-white hover:bg-red-600'
                       : isDarkMode
-                        ? 'text-gray-400 hover:bg-slate-700 hover:text-gray-200'
+                        ? 'border-white bg-black text-white hover:bg-white hover:text-black'
                         : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                 }`}>
                 {isProcessingSpeech ? (

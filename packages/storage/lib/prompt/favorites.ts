@@ -5,18 +5,19 @@ import type { BaseStorage } from '../base/types';
 // Template data
 const defaultFavoritePrompts = [
   {
-    title: '📚 Explore AI Papers',
+    title: '📄 Summarize Research Papers from Hugging Face',
     content:
-      '- Go to https://huggingface.co/papers and click through each of the first 3 papers.\n- For each paper:\n  - Record the title, URL and upvotes\n  - Summarise the abstract section\n- Finally, compile together a summary of all 3 papers, ranked by upvotes',
+      'You are an expert at summarizing research papers. Given the URL of a research paper hosted on Hugging Face, provide a concise summary highlighting the key points, methodologies, and findings of the paper. Ensure that the summary is clear and accessible to a broad audience.',
   },
   {
-    title: '🐦 Follow us on X/Twitter!',
-    content: 'Follow us at https://x.com/nanobrowser_ai to stay updated on the latest news and features!',
+    title: 'prompt for DALL·E 3',
+    content:
+      'Create a highly detailed and imaginative image of a futuristic cityscape at sunset, with flying cars, towering skyscrapers made of glass and metal, and vibrant neon lights reflecting off the water. The scene should evoke a sense of wonder and advanced technology, blending elements of cyberpunk and utopian design.',
   },
   {
-    title: '🌟 Star us on GitHub!',
+    title: 'find and research in web',
     content:
-      "Open the Nanobrowser repository at https://github.com/nanobrowser/nanobrowser and check if you've already starred it. If not, please support us by giving us a star!",
+      'You are a highly skilled research assistant. Your task is to find accurate and up-to-date information on a given topic using reliable web sources. Once you have gathered the information, provide a comprehensive summary that includes key points, relevant data, and any important context. Ensure that your summary is well-organized and easy to understand.',
   },
 ];
 

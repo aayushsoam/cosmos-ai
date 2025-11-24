@@ -16,10 +16,10 @@ import {
   RequestCancelledError,
 } from './errors';
 import { filterExternalContent } from '../messages/utils';
-const logger = createLogger('PlannerAgent');
+const logger = createLogger('thinkerAgent');
 
-// Define Zod schema for planner output
-export const plannerOutputSchema = z.object({
+// Define Zod schema for thinker output
+export const thinkerOutputSchema = z.object({
   observation: z.string(),
   challenges: z.string(),
   done: z.union([
@@ -43,24 +43,24 @@ export const plannerOutputSchema = z.object({
   ]),
 });
 
-export type PlannerOutput = z.infer<typeof plannerOutputSchema>;
+export type thinkerOutput = z.infer<typeof thinkerOutputSchema>;
 
-export class PlannerAgent extends BaseAgent<typeof plannerOutputSchema, PlannerOutput> {
+export class thinkerAgent extends BaseAgent<typeof thinkerOutputSchema, thinkerOutput> {
   constructor(options: BaseAgentOptions, extraOptions?: Partial<ExtraAgentOptions>) {
-    super(plannerOutputSchema, options, { ...extraOptions, id: 'planner' });
+    super(thinkerOutputSchema, options, { ...extraOptions, id: 'thinker' });
   }
 
-  async execute(): Promise<AgentOutput<PlannerOutput>> {
+  async execute(): Promise<AgentOutput<thinkerOutput>> {
     try {
-      this.context.emitEvent(Actors.PLANNER, ExecutionState.STEP_START, 'Planning...');
+      this.context.emitEvent(Actors.thinker, ExecutionState.STEP_START, 'Planning...');
       // get all messages from the message manager, state message should be the last one
       const messages = this.context.messageManager.getMessages();
       // Use full message history except the first one
-      const plannerMessages = [this.prompt.getSystemMessage(), ...messages.slice(1)];
+      const thinkerMessages = [this.prompt.getSystemMessage(), ...messages.slice(1)];
 
-      // Remove images from last message if vision is not enabled for planner but vision is enabled
-      if (!this.context.options.useVisionForPlanner && this.context.options.useVision) {
-        const lastStateMessage = plannerMessages[plannerMessages.length - 1];
+      // Remove images from last message if vision is not enabled for thinker but vision is enabled
+      if (!this.context.options.useVisionForthinker && this.context.options.useVision) {
+        const lastStateMessage = thinkerMessages[thinkerMessages.length - 1];
         let newMsg = '';
 
         if (Array.isArray(lastStateMessage.content)) {
@@ -74,12 +74,12 @@ export class PlannerAgent extends BaseAgent<typeof plannerOutputSchema, PlannerO
           newMsg = lastStateMessage.content;
         }
 
-        plannerMessages[plannerMessages.length - 1] = new HumanMessage(newMsg);
+        thinkerMessages[thinkerMessages.length - 1] = new HumanMessage(newMsg);
       }
 
-      const modelOutput = await this.invoke(plannerMessages);
+      const modelOutput = await this.invoke(thinkerMessages);
       if (!modelOutput) {
-        throw new Error('Failed to validate planner output');
+        throw new Error('Failed to validate thinker output');
       }
 
       // clean the model output
@@ -89,7 +89,7 @@ export class PlannerAgent extends BaseAgent<typeof plannerOutputSchema, PlannerO
       const challenges = filterExternalContent(modelOutput.challenges);
       const reasoning = filterExternalContent(modelOutput.reasoning);
 
-      const cleanedPlan: PlannerOutput = {
+      const cleanedPlan: thinkerOutput = {
         ...modelOutput,
         observation,
         challenges,
@@ -100,8 +100,8 @@ export class PlannerAgent extends BaseAgent<typeof plannerOutputSchema, PlannerO
 
       // If task is done, emit the final answer; otherwise emit next steps
       const eventMessage = cleanedPlan.done ? cleanedPlan.final_answer : cleanedPlan.next_steps;
-      this.context.emitEvent(Actors.PLANNER, ExecutionState.STEP_OK, eventMessage);
-      logger.info('Planner output', JSON.stringify(cleanedPlan, null, 2));
+      this.context.emitEvent(Actors.thinker, ExecutionState.STEP_OK, eventMessage);
+      logger.info('thinker output', JSON.stringify(cleanedPlan, null, 2));
 
       return {
         id: this.id,
@@ -121,7 +121,7 @@ export class PlannerAgent extends BaseAgent<typeof plannerOutputSchema, PlannerO
       }
 
       logger.error(`Planning failed: ${errorMessage}`);
-      this.context.emitEvent(Actors.PLANNER, ExecutionState.STEP_FAIL, `Planning failed: ${errorMessage}`);
+      this.context.emitEvent(Actors.thinker, ExecutionState.STEP_FAIL, `Planning failed: ${errorMessage}`);
       return {
         id: this.id,
         error: errorMessage,

@@ -2,11 +2,11 @@
 import { BasePrompt } from './base';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import type { AgentContext } from '@src/background/agent/types';
-import { plannerSystemPromptTemplate } from './templates/planner';
+import { thinkerSystemPromptTemplate } from './templates/thinker';
 
-export class PlannerPrompt extends BasePrompt {
+export class thinkerPrompt extends BasePrompt {
   getSystemMessage(): SystemMessage {
-    return new SystemMessage(plannerSystemPromptTemplate);
+    return new SystemMessage(thinkerSystemPromptTemplate);
   }
 
   async getUserMessage(context: AgentContext): Promise<HumanMessage> {

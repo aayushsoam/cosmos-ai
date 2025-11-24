@@ -4,31 +4,31 @@
 
 <div align="center">
 
-[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/nanobrowser)
-[![Twitter](https://img.shields.io/badge/Twitter-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/nanobrowser_ai)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/cosmos)
+[![Twitter](https://img.shields.io/badge/Twitter-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/cosmos_ai)
 [![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/NN3ABHggMK)
-[<img src="https://deepwiki.com/badge.svg" height="28" alt="Ask DeepWiki">](https://deepwiki.com/nanobrowser/nanobrowser)
+[<img src="https://deepwiki.com/badge.svg" height="28" alt="Ask DeepWiki">](https://deepwiki.com/cosmos/cosmos)
 
 </div>
 
-## 🌐 Nanobrowser
+## 🌐 cosmos
 
-Nanobrowser, tarayıcınızda çalışan açık kaynaklı bir yapay zeka tarayıcı otomasyon aracıdır. Esnek LLM seçenekleri ve çoklu ajan sistemiyle birlikte OpenAI Operator’a ücretsiz bir alternatiftir.
+cosmos, tarayıcınızda çalışan açık kaynaklı bir yapay zeka tarayıcı otomasyon aracıdır. Esnek LLM seçenekleri ve çoklu ajan sistemiyle birlikte OpenAI Operator’a ücretsiz bir alternatiftir.
 
-⬇️ [Nanobrowser’ı Chrome Web Mağazası’ndan ücretsiz edinin](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal)
+⬇️ [cosmos’ı Chrome Web Mağazası’ndan ücretsiz edinin](https://chromewebstore.google.com/detail/cosmos/imbddededgmcgfhfpcjmijokokekbkal)
 
-👏 Topluluğa katılın: [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai)
+👏 Topluluğa katılın: [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/cosmos_ai)
 
-❤️ Nanobrowser’ı sevdiniz mi? Bize bir yıldız ⭐ verin ve yayılmasına yardımcı olun!
+❤️ cosmos’ı sevdiniz mi? Bize bir yıldız ⭐ verin ve yayılmasına yardımcı olun!
 
 <div align="center">
-<img src="https://github.com/user-attachments/assets/112c4385-7b03-4b81-a352-4f348093351b" width="600" alt="Nanobrowser Demo GIF" />
-<p><em>Nanobrowser’ın çoklu ajan sistemi, HuggingFace'i gerçek zamanlı analiz ederken; Planner engellerle karşılaştığında akıllıca kendi kendini düzeltir ve Navigator’a yaklaşımını dinamik olarak ayarlamasını söyler—tüm bunlar yerel olarak tarayıcınızda gerçekleşir.</em></p>
+<img src="https://github.com/user-attachments/assets/112c4385-7b03-4b81-a352-4f348093351b" width="600" alt="cosmos Demo GIF" />
+<p><em>cosmos’ın çoklu ajan sistemi, HuggingFace'i gerçek zamanlı analiz ederken; thinker engellerle karşılaştığında akıllıca kendi kendini düzeltir ve Navigator’a yaklaşımını dinamik olarak ayarlamasını söyler—tüm bunlar yerel olarak tarayıcınızda gerçekleşir.</em></p>
 </div>
 
-## 🔥Neden Nanobrowser?
+## 🔥Neden cosmos?
 
-OpenAI Operator'ın aylık 200 dolarlık ücretinden kurtulmak mı istiyorsunuz? **Nanobrowser**, bir Chrome uzantısı olarak size premium tarayıcı otomasyonu yetenekleri sunar ve tam kontrolü elinizde tutmanızı sağlar:
+OpenAI Operator'ın aylık 200 dolarlık ücretinden kurtulmak mı istiyorsunuz? **cosmos**, bir Chrome uzantısı olarak size premium tarayıcı otomasyonu yetenekleri sunar ve tam kontrolü elinizde tutmanızı sağlar:
 
 - **%100 Ücretsiz** - Abonelik ücreti veya gizli maliyetler yok. Sadece yükleyin ve kendi API anahtarlarınızı kullanın, ne kadar kullanırsanız o kadar ödersiniz.
 - **Gizlilik Odaklı** - Her şey yerel tarayıcınızda çalışır. Kimlik bilgileriniz yalnızca sizde kalır, bulut hizmetleriyle paylaşılmaz.
@@ -55,51 +55,51 @@ OpenAI Operator'ın aylık 200 dolarlık ücretinden kurtulmak mı istiyorsunuz?
 **Desteklenmeyenler:**
 - Firefox, Safari ve diğer Chromium türevleri (Opera, Arc vb.)
 
-> **Not**: Nanobrowser diğer Chromium tabanlı tarayıcılarda çalışabilir, ancak en iyi deneyim ve garantili uyumluluk için Chrome veya Edge öneriyoruz.
+> **Not**: cosmos diğer Chromium tabanlı tarayıcılarda çalışabilir, ancak en iyi deneyim ve garantili uyumluluk için Chrome veya Edge öneriyoruz.
 
 ## 🚀 Hızlı Başlangıç
 
 1. **Chrome Web Mağazası’ndan Kurulum** (Kararlı Sürüm):
-   * [Nanobrowser Chrome Web Mağazası sayfasına](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal) gidin
+   * [cosmos Chrome Web Mağazası sayfasına](https://chromewebstore.google.com/detail/cosmos/imbddededgmcgfhfpcjmijokokekbkal) gidin
    * "Chrome’a Ekle" butonuna tıklayın
    * Kurulumu onaylayın
 
 > **Önemli Not**: En yeni özellikler için aşağıdaki ["En Son Sürümü Manuel Kur"](#-en-son-sürümü-manuel-kur) kısmından kurulum yapmanızı öneririz. Chrome Web Mağazası versiyonu inceleme süreci nedeniyle gecikebilir.
 
 2. **Ajan Modellerini Yapılandırın**:
-   * Araç çubuğundaki Nanobrowser simgesine tıklayın
+   * Araç çubuğundaki cosmos simgesine tıklayın
    * Sağ üstteki `Ayarlar` simgesine tıklayın
    * LLM API anahtarlarınızı ekleyin
-   * Farklı ajanlar (Navigator, Planner) için hangi modelin kullanılacağını seçin
+   * Farklı ajanlar (Navigator, thinker) için hangi modelin kullanılacağını seçin
 
 ## 🔧 En Son Sürümü Manuel Kur
 
 En yeni özellikleri içeren en güncel sürümü kurmak için:
 
 1. **İndirin**
-    * Resmi Github [sürüm sayfasından](https://github.com/nanobrowser/nanobrowser/releases) en güncel `nanobrowser.zip` dosyasını indirin
+    * Resmi Github [sürüm sayfasından](https://github.com/cosmos/cosmos/releases) en güncel `cosmos.zip` dosyasını indirin
 
 2. **Kurulum**:
-    * `nanobrowser.zip` dosyasını çıkarın
+    * `cosmos.zip` dosyasını çıkarın
     * Chrome'da `chrome://extensions/` adresine gidin
     * Sağ üstten `Geliştirici modu`nu etkinleştirin
     * Sol üstte `Paketlenmemişi yükle`ye tıklayın
-    * Çıkardığınız `nanobrowser` klasörünü seçin
+    * Çıkardığınız `cosmos` klasörünü seçin
 
 3. **Ajan Modellerini Yapılandırın**
-    * Nanobrowser simgesine tıklayarak yan paneli açın
+    * cosmos simgesine tıklayarak yan paneli açın
     * Sağ üstteki `Ayarlar` simgesine tıklayın
     * API anahtarlarınızı ekleyin
-    * Ajanlara model atayın (Navigator, Planner)
+    * Ajanlara model atayın (Navigator, thinker)
 
 4. **Güncelleme**:
-    * Yeni `nanobrowser.zip` dosyasını indirin
-    * Mevcut Nanobrowser dosyalarını yenileriyle değiştirin
-    * `chrome://extensions/` sayfasına gidip Nanobrowser kartındaki yenile simgesine tıklayın
+    * Yeni `cosmos.zip` dosyasını indirin
+    * Mevcut cosmos dosyalarını yenileriyle değiştirin
+    * `chrome://extensions/` sayfasına gidip cosmos kartındaki yenile simgesine tıklayın
 
 ## 🛠️ Kaynaktan Derleme
 
-Nanobrowser’ı kendiniz derlemek isterseniz şu adımları izleyin:
+cosmos’ı kendiniz derlemek isterseniz şu adımları izleyin:
 
 1. **Gereksinimler**:
    * [Node.js](https://nodejs.org/) (v22.12.0 veya üstü)
@@ -107,8 +107,8 @@ Nanobrowser’ı kendiniz derlemek isterseniz şu adımları izleyin:
 
 2. **Depoyu Klonlayın**:
    ```bash
-   git clone https://github.com/nanobrowser/nanobrowser.git
-   cd nanobrowser
+   git clone https://github.com/cosmos/cosmos.git
+   cd cosmos
    ```
 
 3. **Bağımlılıkları Yükleyin**:
@@ -136,11 +136,11 @@ Nanobrowser’ı kendiniz derlemek isterseniz şu adımları izleyin:
 
 ## 🤖 Model Seçimi
 
-Nanobrowser, her ajan için farklı LLM modelleri ayarlamanıza olanak tanır. Böylece performans ve maliyet arasında denge kurabilirsiniz. İşte önerilen yapılandırmalar:
+cosmos, her ajan için farklı LLM modelleri ayarlamanıza olanak tanır. Böylece performans ve maliyet arasında denge kurabilirsiniz. İşte önerilen yapılandırmalar:
 
 ### Daha Yüksek Performans
 
-* **Planner**: Claude Sonnet 4
+* **thinker**: Claude Sonnet 4
 
   * Daha iyi mantıksal düşünme ve planlama
 * **Navigator**: Claude Haiku 3.5
@@ -150,7 +150,7 @@ Nanobrowser, her ajan için farklı LLM modelleri ayarlamanıza olanak tanır. B
 
 ### Uygun Maliyetli Yapılandırma
 
-* **Planner**: Claude Haiku veya GPT-4o
+* **thinker**: Claude Haiku veya GPT-4o
 
   * Düşük maliyetle makul performans
   * Karmaşık görevlerde daha fazla yineleme gerekebilir
@@ -204,21 +204,21 @@ Sadece bir cümleyle gerçekleştirebileceğiniz güçlü görevlerden bazılar�
 
 ## 🛠️ Yol Haritası
 
-Nanobrowser için heyecan verici yeni özellikler geliştiriyoruz, katılmak ister misiniz?
+cosmos için heyecan verici yeni özellikler geliştiriyoruz, katılmak ister misiniz?
 
-Detaylı yol haritamıza ve gelecek özelliklere [GitHub Discussions](https://github.com/nanobrowser/nanobrowser/discussions/85) üzerinden göz atabilirsiniz.
+Detaylı yol haritamıza ve gelecek özelliklere [GitHub Discussions](https://github.com/cosmos/cosmos/discussions/85) üzerinden göz atabilirsiniz.
 
 ## 🤝 Katkıda Bulunun
 
-**Nanobrowser’ı daha iyi hale getirmemize yardım edin!** Her türden katkıya açığız:
+**cosmos’ı daha iyi hale getirmemize yardım edin!** Her türden katkıya açığız:
 
 * **Prompt & Kullanım Senaryoları Paylaşın**
 
   * [Discord sunucumuza](https://discord.gg/NN3ABHggMK) katılın
-  * Nanobrowser’ı nasıl kullandığınızı anlatın ve topluluk kütüphanemizi büyütün
+  * cosmos’ı nasıl kullandığınızı anlatın ve topluluk kütüphanemizi büyütün
 * **Geri Bildirim Verin**
 
-  * Nanobrowser’ı deneyin ve performansı hakkında önerilerinizi paylaşın
+  * cosmos’ı deneyin ve performansı hakkında önerilerinizi paylaşın
 * **Kod Katkısı Yapın**
 
   * Kod katkısı için yönergeleri [CONTRIBUTING.md](CONTRIBUTING.md) dosyasında bulabilirsiniz
@@ -230,21 +230,21 @@ Açık kaynak ve topluluk iş birliğine inanıyoruz. Tarayıcı otomasyonunun g
 
 Bir güvenlik açığı keşfederseniz, lütfen bunu açık şekilde **issue, pull request veya discussion** yoluyla paylaşmayın.
 
-Bunun yerine, [GitHub Güvenlik Danışma Sayfası](https://github.com/nanobrowser/nanobrowser/security/advisories/new) üzerinden özel olarak bildirin. Böylece açığı kamuya açıklanmadan önce düzeltme şansı buluruz.
+Bunun yerine, [GitHub Güvenlik Danışma Sayfası](https://github.com/cosmos/cosmos/security/advisories/new) üzerinden özel olarak bildirin. Böylece açığı kamuya açıklanmadan önce düzeltme şansı buluruz.
 
-Nanobrowser’ı ve kullanıcılarını güvende tutmaya yardım ettiğiniz için teşekkür ederiz!
+cosmos’ı ve kullanıcılarını güvende tutmaya yardım ettiğiniz için teşekkür ederiz!
 
 ## 💬 Topluluk
 
 Giderek büyüyen geliştirici ve kullanıcı topluluğumuza katılın:
 
 * [Discord](https://discord.gg/NN3ABHggMK) – Ekip ve toplulukla sohbet edin
-* [Twitter](https://x.com/nanobrowser_ai) – Güncellemeler ve duyurular
-* [GitHub Discussions](https://github.com/nanobrowser/nanobrowser/discussions) – Fikirlerinizi paylaşın ve sorular sorun
+* [Twitter](https://x.com/cosmos_ai) – Güncellemeler ve duyurular
+* [GitHub Discussions](https://github.com/cosmos/cosmos/discussions) – Fikirlerinizi paylaşın ve sorular sorun
 
 ## 👏 Teşekkürler
 
-Nanobrowser, şu harika açık kaynak projeler üzerine inşa edilmiştir:
+cosmos, şu harika açık kaynak projeler üzerine inşa edilmiştir:
 
 * [Browser Use](https://github.com/browser-use/browser-use)
 * [Puppeteer](https://github.com/EmergenceAI/Agent-E)
@@ -257,9 +257,9 @@ Tüm yaratıcılarına ve katkıda bulunanlara büyük teşekkürler!
 
 Bu proje Apache License 2.0 ile lisanslanmıştır – detaylar için [LICENSE](LICENSE) dosyasına bakın.
 
-Sevgiyle yapıldı ❤️ Nanobrowser Ekibi tarafından.
+Sevgiyle yapıldı ❤️ cosmos Ekibi tarafından.
 
-Nanobrowser’ı sevdiniz mi? Bize bir yıldız 🌟 verin ve topluluğumuza katılın: [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai)
+cosmos’ı sevdiniz mi? Bize bir yıldız 🌟 verin ve topluluğumuza katılın: [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/cosmos_ai)
 
 ---
 

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { RxDiscordLogo } from 'react-icons/rx';
 import { FiSettings } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
@@ -11,6 +10,8 @@ import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
 import BookmarkList from './components/BookmarkList';
+import ShinyText from './components/ShinyText';
+import TabSelectorModal from './components/TabSelectorModal';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
 
@@ -31,13 +32,38 @@ const SidePanel = () => {
   const [chatSessions, setChatSessions] = useState<Array<{ id: string; title: string; createdAt: number }>>([]);
   const [isFollowUpMode, setIsFollowUpMode] = useState(false);
   const [isHistoricalSession, setIsHistoricalSession] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [favoritePrompts, setFavoritePrompts] = useState<FavoritePrompt[]>([]);
   const [hasConfiguredModels, setHasConfiguredModels] = useState<boolean | null>(null); // null = loading, false = no models, true = has models
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingSpeech, setIsProcessingSpeech] = useState(false);
   const [isReplaying, setIsReplaying] = useState(false);
   const [replayEnabled, setReplayEnabled] = useState(false);
+  const [currentAgent, setCurrentAgent] = useState<{
+    type: 'thinker' | 'navigation' | 'system';
+    status: 'running' | 'completed' | 'error';
+  } | null>(null);
+  const [agentHistory, setAgentHistory] = useState<
+    Array<{
+      type: 'thinker' | 'navigation' | 'system';
+      status: 'completed' | 'error';
+      timestamp: number;
+    }>
+  >([]);
+  const [showAgentHistory, setShowAgentHistory] = useState(false);
+  const [showSummarize, setShowSummarize] = useState(false);
+  const [showTabSelector, setShowTabSelector] = useState(false);
+  const [tabSummaries] = useState<
+    {
+      tabId: number;
+      title: string;
+      url: string;
+      favicon?: string;
+      summary: string;
+    }[]
+  >([]);
+  const [selectedTabUrl, setSelectedTabUrl] = useState<string>('');
+  const [tabs, setTabs] = useState<Array<{ id: number; title: string; url: string; favicon?: string }>>([]);
   const sessionIdRef = useRef<string | null>(null);
   const isReplayingRef = useRef<boolean>(false);
   const portRef = useRef<chrome.runtime.Port | null>(null);
@@ -48,17 +74,9 @@ const SidePanel = () => {
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<number | null>(null);
 
-  // Check for dark mode preference
+  // Force dark mode as default
   useEffect(() => {
-    const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    setIsDarkMode(darkModeMediaQuery.matches);
-
-    const handleChange = (e: MediaQueryListEvent) => {
-      setIsDarkMode(e.matches);
-    };
-
-    darkModeMediaQuery.addEventListener('change', handleChange);
-    return () => darkModeMediaQuery.removeEventListener('change', handleChange);
+    setIsDarkMode(true);
   }, []);
 
   // Check if models are configured
@@ -91,6 +109,52 @@ const SidePanel = () => {
     checkModelConfiguration();
     loadGeneralSettings();
   }, [checkModelConfiguration, loadGeneralSettings]);
+
+  // Fetch browser tabs - updates in real-time
+  useEffect(() => {
+    const fetchTabs = async () => {
+      try {
+        const currentTabs = await chrome.tabs.query({ currentWindow: true });
+        const tabsData = currentTabs.map(tab => ({
+          id: tab.id || 0,
+          title: tab.title || 'Untitled',
+          url: tab.url || 'about:blank',
+          favicon: tab.favIconUrl,
+        }));
+        setTabs(tabsData);
+      } catch (error) {
+        console.error('Error fetching tabs:', error);
+      }
+    };
+
+    // Fetch immediately on mount
+    fetchTabs();
+
+    // Create separate listeners
+    const onTabUpdated = (tabId: number) => {
+      fetchTabs();
+    };
+
+    const onTabRemoved = (tabId: number) => {
+      fetchTabs();
+    };
+
+    const onTabCreated = () => {
+      fetchTabs();
+    };
+
+    // Add all listeners for tab changes
+    chrome.tabs.onUpdated.addListener(onTabUpdated);
+    chrome.tabs.onRemoved.addListener(onTabRemoved);
+    chrome.tabs.onCreated.addListener(onTabCreated);
+
+    // Cleanup
+    return () => {
+      chrome.tabs.onUpdated.removeListener(onTabUpdated);
+      chrome.tabs.onRemoved.removeListener(onTabRemoved);
+      chrome.tabs.onCreated.removeListener(onTabCreated);
+    };
+  }, []);
 
   // Re-check model configuration when the side panel becomes visible again
   useEffect(() => {
@@ -154,21 +218,48 @@ const SidePanel = () => {
       let skip = true;
       let displayProgress = false;
 
+      // Track current agent and history
+      if (actor === Actors.thinker) {
+        if (state === ExecutionState.STEP_START) {
+          setCurrentAgent({ type: 'thinker', status: 'running' });
+        } else if (state === ExecutionState.STEP_OK) {
+          setCurrentAgent(null);
+          setAgentHistory(prev => [...prev, { type: 'thinker', status: 'completed', timestamp: Date.now() }]);
+        } else if (state === ExecutionState.STEP_FAIL) {
+          setCurrentAgent(null);
+          setAgentHistory(prev => [...prev, { type: 'thinker', status: 'error', timestamp: Date.now() }]);
+        }
+      } else if (actor === Actors.NAVIGATOR) {
+        if (state === ExecutionState.STEP_START) {
+          setCurrentAgent({ type: 'navigation', status: 'running' });
+        } else if (state === ExecutionState.STEP_OK) {
+          setCurrentAgent(null);
+          setAgentHistory(prev => [...prev, { type: 'navigation', status: 'completed', timestamp: Date.now() }]);
+        } else if (state === ExecutionState.STEP_FAIL) {
+          setCurrentAgent(null);
+          setAgentHistory(prev => [...prev, { type: 'navigation', status: 'error', timestamp: Date.now() }]);
+        }
+      }
+
       switch (actor) {
         case Actors.SYSTEM:
           switch (state) {
             case ExecutionState.TASK_START:
               // Reset historical session flag when a new task starts
               setIsHistoricalSession(false);
+              setCurrentAgent(null);
+              setAgentHistory([]);
+              setShowAgentHistory(false);
               break;
             case ExecutionState.TASK_OK:
-              setIsFollowUpMode(true);
+              setIsFollowUpMode(false); // Executor cleanup happens, so reset to allow new tasks
               setInputEnabled(true);
               setShowStopButton(false);
               setIsReplaying(false);
+              skip = false; // Show completion message with final answer
               break;
             case ExecutionState.TASK_FAIL:
-              setIsFollowUpMode(true);
+              setIsFollowUpMode(false); // Executor cleanup happens, so reset to allow new tasks
               setInputEnabled(true);
               setShowStopButton(false);
               setIsReplaying(false);
@@ -192,16 +283,16 @@ const SidePanel = () => {
           break;
         case Actors.USER:
           break;
-        case Actors.PLANNER:
+        case Actors.thinker:
           switch (state) {
             case ExecutionState.STEP_START:
-              displayProgress = true;
+              displayProgress = false;
               break;
             case ExecutionState.STEP_OK:
-              skip = false;
+              skip = true; // Hide thinker messages from UI
               break;
             case ExecutionState.STEP_FAIL:
-              skip = false;
+              skip = true; // Hide thinker messages from UI
               break;
             case ExecutionState.STEP_CANCEL:
               break;
@@ -213,13 +304,14 @@ const SidePanel = () => {
         case Actors.NAVIGATOR:
           switch (state) {
             case ExecutionState.STEP_START:
-              displayProgress = true;
+              displayProgress = false;
               break;
             case ExecutionState.STEP_OK:
               displayProgress = false;
+              skip = true; // Hide navigator messages from UI
               break;
             case ExecutionState.STEP_FAIL:
-              skip = false;
+              skip = true; // Hide navigator messages from UI
               displayProgress = false;
               break;
             case ExecutionState.STEP_CANCEL:
@@ -228,14 +320,14 @@ const SidePanel = () => {
             case ExecutionState.ACT_START:
               if (content !== 'cache_content') {
                 // skip to display caching content
-                skip = false;
+                skip = true; // Hide action details from UI
               }
               break;
             case ExecutionState.ACT_OK:
-              skip = !isReplayingRef.current;
+              skip = true; // Hide action success messages
               break;
             case ExecutionState.ACT_FAIL:
-              skip = false;
+              skip = true; // Hide action failure details, show in agent status only
               break;
             default:
               console.error('Invalid action', state);
@@ -799,6 +891,49 @@ const SidePanel = () => {
     }
   };
 
+  const handleCurrentTabClick = () => {
+    setShowTabSelector(true);
+  };
+
+  const handleTabsSelected = async (tabIds: number[]) => {
+    if (tabIds.length === 0) return;
+
+    try {
+      // Fetch tab details
+      const allTabs = await chrome.tabs.query({ currentWindow: true });
+      const selectedTabs = allTabs.filter(tab => tabIds.includes(tab.id || 0));
+
+      // Build tab information
+      let tabInfo = '';
+      selectedTabs.forEach((tab, index) => {
+        tabInfo += `\n\nTab ${index + 1}:\nTitle: ${tab.title || 'Untitled'}\nURL: ${tab.url}`;
+      });
+
+      // Show user message
+      appendMessage({
+        actor: Actors.USER,
+        content: `Summarize ${selectedTabs.length} selected tab(s)`,
+        timestamp: Date.now(),
+      });
+
+      // Show AI response with tab summaries
+      const summaryMessage = `Here are the ${selectedTabs.length} tab(s) you selected for summarization:${tabInfo}\n\nTo get detailed summaries, I would need to access the actual content of these pages. Since I'm working with just the URLs and titles, I can provide general information based on the URLs.\n\nWould you like me to navigate to these pages and extract their content for a detailed summary?`;
+
+      appendMessage({
+        actor: Actors.SYSTEM,
+        content: summaryMessage,
+        timestamp: Date.now(),
+      });
+    } catch (error) {
+      console.error('Failed to get tab information:', error);
+      appendMessage({
+        actor: Actors.SYSTEM,
+        content: 'Failed to get tab information for summarization',
+        timestamp: Date.now(),
+      });
+    }
+  };
+
   // Load favorite prompts from storage
   useEffect(() => {
     const loadFavorites = async () => {
@@ -1000,21 +1135,20 @@ const SidePanel = () => {
   };
 
   return (
-    <div>
-      <div
-        className={`flex h-screen flex-col ${isDarkMode ? 'bg-slate-900' : "bg-[url('/bg.jpg')] bg-cover bg-no-repeat"} overflow-hidden border ${isDarkMode ? 'border-sky-800' : 'border-[rgb(186,230,253)]'} rounded-2xl`}>
-        <header className="header relative">
+    <div className="bg-black">
+      <div className="flex h-screen flex-col overflow-hidden rounded-2xl border border-white bg-black">
+        <header className="header relative border-b border-white bg-black">
           <div className="header-logo">
             {showHistory ? (
               <button
                 type="button"
                 onClick={() => handleBackToChat(false)}
-                className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+                className="cursor-pointer text-white hover:text-gray-300 transition-colors"
                 aria-label={t('nav_back_a11y')}>
                 {t('nav_back')}
               </button>
             ) : (
-              <img src="/icon-128.png" alt="Extension Logo" className="size-6" />
+              <div className="text-xl font-bold text-white">Cosmos AI</div>
             )}
           </div>
           <div className="header-icons">
@@ -1024,7 +1158,7 @@ const SidePanel = () => {
                   type="button"
                   onClick={handleNewChat}
                   onKeyDown={e => e.key === 'Enter' && handleNewChat()}
-                  className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+                  className="header-icon cursor-pointer rounded-lg border border-white bg-black p-2 text-white transition-all hover:bg-white hover:text-black"
                   aria-label={t('nav_newChat_a11y')}
                   tabIndex={0}>
                   <PiPlusBold size={20} />
@@ -1033,25 +1167,18 @@ const SidePanel = () => {
                   type="button"
                   onClick={handleLoadHistory}
                   onKeyDown={e => e.key === 'Enter' && handleLoadHistory()}
-                  className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+                  className="header-icon cursor-pointer rounded-lg border border-white bg-black p-2 text-white transition-all hover:bg-white hover:text-black"
                   aria-label={t('nav_loadHistory_a11y')}
                   tabIndex={0}>
                   <GrHistory size={20} />
                 </button>
               </>
             )}
-            <a
-              href="https://discord.gg/NN3ABHggMK"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'}`}>
-              <RxDiscordLogo size={20} />
-            </a>
             <button
               type="button"
               onClick={() => chrome.runtime.openOptionsPage()}
               onKeyDown={e => e.key === 'Enter' && chrome.runtime.openOptionsPage()}
-              className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+              className="header-icon cursor-pointer rounded-lg border border-white bg-black p-2 text-white transition-all hover:bg-white hover:text-black"
               aria-label={t('nav_settings_a11y')}
               tabIndex={0}>
               <FiSettings size={20} />
@@ -1073,10 +1200,9 @@ const SidePanel = () => {
           <>
             {/* Show loading state while checking model configuration */}
             {hasConfiguredModels === null && (
-              <div
-                className={`flex flex-1 items-center justify-center p-8 ${isDarkMode ? 'text-sky-300' : 'text-sky-600'}`}>
+              <div className="flex flex-1 items-center justify-center bg-black p-8 text-white">
                 <div className="text-center">
-                  <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-2 border-sky-400 border-t-transparent"></div>
+                  <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                   <p>{t('status_checkingConfig')}</p>
                 </div>
               </div>
@@ -1084,38 +1210,16 @@ const SidePanel = () => {
 
             {/* Show setup message when no models are configured */}
             {hasConfiguredModels === false && (
-              <div
-                className={`flex flex-1 items-center justify-center p-8 ${isDarkMode ? 'text-sky-300' : 'text-sky-600'}`}>
+              <div className="flex flex-1 items-center justify-center bg-black p-8 text-white">
                 <div className="max-w-md text-center">
-                  <img src="/icon-128.png" alt="Nanobrowser Logo" className="mx-auto mb-4 size-12" />
-                  <h3 className={`mb-2 text-lg font-semibold ${isDarkMode ? 'text-sky-200' : 'text-sky-700'}`}>
-                    {t('welcome_title')}
-                  </h3>
-                  <p className="mb-4">{t('welcome_instruction')}</p>
+                  <div className="mb-4 text-5xl font-bold text-white">Cosmos AI</div>
+                  <h3 className="mb-2 text-lg font-semibold text-white">{t('welcome_title')}</h3>
+                  <p className="mb-4 text-white">{t('welcome_instruction')}</p>
                   <button
                     onClick={() => chrome.runtime.openOptionsPage()}
-                    className={`my-4 rounded-lg px-4 py-2 font-medium transition-colors ${
-                      isDarkMode ? 'bg-sky-600 text-white hover:bg-sky-700' : 'bg-sky-500 text-white hover:bg-sky-600'
-                    }`}>
+                    className="my-4 rounded-lg border border-white bg-black px-6 py-3 font-medium text-white transition-all hover:bg-white hover:text-black">
                     {t('welcome_openSettings')}
                   </button>
-                  <div className="mt-4 text-sm opacity-75">
-                    <a
-                      href="https://github.com/nanobrowser/nanobrowser?tab=readme-ov-file#-quick-start"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-700 hover:text-sky-600'}`}>
-                      {t('welcome_quickStart')}
-                    </a>
-                    <span className="mx-2">•</span>
-                    <a
-                      href="https://discord.gg/NN3ABHggMK"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-700 hover:text-sky-600'}`}>
-                      {t('welcome_joinCommunity')}
-                    </a>
-                  </div>
                 </div>
               </div>
             )}
@@ -1123,10 +1227,24 @@ const SidePanel = () => {
             {/* Show normal chat interface when models are configured */}
             {hasConfiguredModels === true && (
               <>
+                {/* Browser Tabs Display */}
+                {tabs.length > 0 && (
+                  // eslint-disable-next-line tailwindcss/no-custom-classname
+                  <div className="scrollbar-hide flex gap-2 overflow-x-auto border-b border-white bg-black p-2">
+                    {tabs.map(tab => (
+                      <div
+                        key={tab.id}
+                        className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-white bg-black px-2.5 py-1.5 text-xs text-white transition-all hover:bg-white hover:text-black">
+                        {tab.favicon && <img src={tab.favicon} alt="" className="size-3 rounded" />}
+                        <span className="max-w-[80px] truncate">{new URL(tab.url).hostname.replace('www.', '')}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {messages.length === 0 && (
                   <>
-                    <div
-                      className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} mb-2 p-2 shadow-sm backdrop-blur-sm`}>
+                    <div className="mb-2 border-t border-white bg-black p-2">
                       <ChatInput
                         onSendMessage={handleSendMessage}
                         onStopTask={handleStopTask}
@@ -1141,6 +1259,7 @@ const SidePanel = () => {
                         isDarkMode={isDarkMode}
                         historicalSessionId={isHistoricalSession && replayEnabled ? currentSessionId : null}
                         onReplay={handleReplay}
+                        onCurrentTabClick={handleCurrentTabClick}
                       />
                     </div>
                     <div className="flex-1 overflow-y-auto">
@@ -1155,16 +1274,64 @@ const SidePanel = () => {
                     </div>
                   </>
                 )}
+                {/* Current Agent Status Display */}
+                {currentAgent && (
+                  <div className="border-b border-white bg-black px-3 py-2 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="text-white">
+                        {currentAgent.type === 'thinker'
+                          ? 'Thinker'
+                          : currentAgent.type === 'navigation'
+                            ? 'Navigator'
+                            : 'System'}
+                        :
+                      </span>
+                      <ShinyText text="running..." speed={2} className="text-white" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Agent History Panel */}
+                {agentHistory.length > 0 && (
+                  <div className="border-b border-white bg-black text-xs">
+                    <button
+                      onClick={() => setShowAgentHistory(!showAgentHistory)}
+                      className="flex w-full items-center justify-between px-3 py-2 text-left text-white transition-colors hover:bg-gray-900">
+                      <span>History: {agentHistory.length} completed</span>
+                      <span className={`transition-transform${showAgentHistory ? 'rotate-180' : ''}`}>▼</span>
+                    </button>
+                    {showAgentHistory && (
+                      <div className="space-y-1 border-t border-white bg-black px-3 py-2">
+                        {agentHistory.map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-2 text-xs">
+                            <span className="text-white">
+                              {item.type === 'thinker'
+                                ? 'Thinker'
+                                : item.type === 'navigation'
+                                  ? 'Navigator'
+                                  : 'System'}
+                              :
+                            </span>
+                            {item.status === 'completed' ? (
+                              <span className="text-white">✓ Done</span>
+                            ) : (
+                              <span className="text-white">✗ Error</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {messages.length > 0 && (
-                  <div
-                    className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-slate-900/80' : ''}`}>
+                  <div className="scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth bg-black p-2">
                     <MessageList messages={messages} isDarkMode={isDarkMode} />
                     <div ref={messagesEndRef} />
                   </div>
                 )}
                 {messages.length > 0 && (
-                  <div
-                    className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} p-2 shadow-sm backdrop-blur-sm`}>
+                  <div className="border-t border-white bg-black p-2">
                     <ChatInput
                       onSendMessage={handleSendMessage}
                       onStopTask={handleStopTask}
@@ -1179,14 +1346,88 @@ const SidePanel = () => {
                       isDarkMode={isDarkMode}
                       historicalSessionId={isHistoricalSession && replayEnabled ? currentSessionId : null}
                       onReplay={handleReplay}
+                      onCurrentTabClick={handleCurrentTabClick}
                     />
                   </div>
                 )}
+                {/* Action Buttons */}
               </>
             )}
           </>
         )}
       </div>
+
+      {/* Tab Selector Modal */}
+      <TabSelectorModal
+        isOpen={showTabSelector}
+        onClose={() => setShowTabSelector(false)}
+        onConfirm={handleTabsSelected}
+        isDarkMode={isDarkMode}
+      />
+
+      {/* Summarize Modal */}
+      {showSummarize && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-2">
+          <div className="max-h-[80vh] w-full max-w-md overflow-auto rounded-xl border border-white bg-black">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-white bg-black p-3">
+              <h2 className="text-sm font-bold text-white">📄 AI Summary</h2>
+              <button onClick={() => setShowSummarize(false)} className="rounded p-1 hover:bg-slate-700">
+                ✕
+              </button>
+            </div>
+
+            {/* Summaries List */}
+            <div className="space-y-2 p-3">
+              {tabSummaries.length === 0 ? (
+                <p className="py-4 text-center text-xs text-gray-400">
+                  No summaries available. Generate summaries to see them here.
+                </p>
+              ) : (
+                tabSummaries.map(summary => (
+                  <button
+                    key={summary.tabId}
+                    onClick={() => setSelectedTabUrl(summary.url)}
+                    className={`cursor-pointer rounded border-2 p-2 transition-all ${
+                      selectedTabUrl === summary.url
+                        ? 'border-blue-500 bg-slate-800'
+                        : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                    }`}>
+                    <div className="flex items-start gap-2">
+                      {summary.favicon && (
+                        <img src={summary.favicon} alt="" className="mt-0.5 size-4 shrink-0 rounded" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-semibold text-white">{summary.title}</p>
+                        <p className="truncate text-xs text-gray-400">{summary.url}</p>
+                      </div>
+                      {selectedTabUrl === summary.url && <span className="text-blue-400">✓</span>}
+                    </div>
+                    <p className="mt-2 line-clamp-3 text-xs text-gray-300">{summary.summary}</p>
+                  </button>
+                ))
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex gap-2 border-t border-sky-800 bg-slate-800 p-3">
+              <button
+                onClick={() => setShowSummarize(false)}
+                className="flex-1 rounded bg-slate-700 px-2 py-1 text-xs font-medium text-gray-200 transition-colors hover:bg-slate-600">
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  console.log('Selected URL:', selectedTabUrl);
+                  setShowSummarize(false);
+                }}
+                className="flex-1 rounded bg-green-600 px-2 py-1 text-xs font-medium text-white transition-colors hover:bg-green-500">
+                ✓ Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

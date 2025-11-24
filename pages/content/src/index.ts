@@ -1,1 +1,3 @@
-console.log('content script loaded');
+import './glowing-border';
+
+console.log('content script loaded with glowing border');

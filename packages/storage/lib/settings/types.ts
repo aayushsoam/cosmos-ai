@@ -1,6 +1,6 @@
 // Agent name, used to identify the agent in the settings
 export enum AgentNameEnum {
-  Planner = 'planner',
+  thinker = 'thinker',
   Navigator = 'navigator',
 }
 
@@ -19,6 +19,7 @@ export enum ProviderTypeEnum {
   Groq = 'groq',
   Cerebras = 'cerebras',
   Llama = 'llama',
+  GitHub = 'github',
   CustomOpenAI = 'custom_openai',
 }
 
@@ -45,13 +46,14 @@ export const llmProviderModelNames = {
     'Llama-4-Maverick-17B-128E-Instruct-FP8',
     'Llama-4-Scout-17B-16E-Instruct-FP8',
   ],
+  [ProviderTypeEnum.GitHub]: ['gpt-4o', 'gpt-4o-mini', 'Phi-4', 'Llama-3.3-70B-Instruct', 'Mistral-large-2411'],
   // Custom OpenAI providers don't have predefined models as they are user-defined
 };
 
 // Default parameters for each agent per provider, for providers not specified, use OpenAI parameters
 export const llmProviderParameters = {
   [ProviderTypeEnum.OpenAI]: {
-    [AgentNameEnum.Planner]: {
+    [AgentNameEnum.thinker]: {
       temperature: 0.7,
       topP: 0.9,
     },
@@ -61,7 +63,7 @@ export const llmProviderParameters = {
     },
   },
   [ProviderTypeEnum.Anthropic]: {
-    [AgentNameEnum.Planner]: {
+    [AgentNameEnum.thinker]: {
       temperature: 0.3,
       topP: 0.6,
     },
@@ -71,7 +73,7 @@ export const llmProviderParameters = {
     },
   },
   [ProviderTypeEnum.Gemini]: {
-    [AgentNameEnum.Planner]: {
+    [AgentNameEnum.thinker]: {
       temperature: 0.7,
       topP: 0.9,
     },
@@ -81,7 +83,7 @@ export const llmProviderParameters = {
     },
   },
   [ProviderTypeEnum.Grok]: {
-    [AgentNameEnum.Planner]: {
+    [AgentNameEnum.thinker]: {
       temperature: 0.7,
       topP: 0.9,
     },
@@ -91,7 +93,7 @@ export const llmProviderParameters = {
     },
   },
   [ProviderTypeEnum.Ollama]: {
-    [AgentNameEnum.Planner]: {
+    [AgentNameEnum.thinker]: {
       temperature: 0.3,
       topP: 0.9,
     },
@@ -101,7 +103,7 @@ export const llmProviderParameters = {
     },
   },
   [ProviderTypeEnum.AzureOpenAI]: {
-    [AgentNameEnum.Planner]: {
+    [AgentNameEnum.thinker]: {
       temperature: 0.7,
       topP: 0.9,
     },
@@ -111,7 +113,7 @@ export const llmProviderParameters = {
     },
   },
   [ProviderTypeEnum.OpenRouter]: {
-    [AgentNameEnum.Planner]: {
+    [AgentNameEnum.thinker]: {
       temperature: 0.7,
       topP: 0.9,
     },
@@ -121,7 +123,7 @@ export const llmProviderParameters = {
     },
   },
   [ProviderTypeEnum.Groq]: {
-    [AgentNameEnum.Planner]: {
+    [AgentNameEnum.thinker]: {
       temperature: 0.7,
       topP: 0.9,
     },
@@ -131,7 +133,7 @@ export const llmProviderParameters = {
     },
   },
   [ProviderTypeEnum.Cerebras]: {
-    [AgentNameEnum.Planner]: {
+    [AgentNameEnum.thinker]: {
       temperature: 0.7,
       topP: 0.9,
     },
@@ -141,9 +143,19 @@ export const llmProviderParameters = {
     },
   },
   [ProviderTypeEnum.Llama]: {
-    [AgentNameEnum.Planner]: {
+    [AgentNameEnum.thinker]: {
       temperature: 0.7,
       topP: 0.9,
+    },
+    [AgentNameEnum.Navigator]: {
+      temperature: 0.3,
+      topP: 0.85,
+    },
+  },
+  [ProviderTypeEnum.GitHub]: {
+    [AgentNameEnum.thinker]: {
+      temperature: 0.7,
+      topP: 0.95,
     },
     [AgentNameEnum.Navigator]: {
       temperature: 0.3,

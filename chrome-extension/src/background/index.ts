@@ -24,6 +24,7 @@ const logger = createLogger('background');
 const browserContext = new BrowserContext({});
 let currentExecutor: Executor | null = null;
 let currentPort: chrome.runtime.Port | null = null;
+let isTaskRunning = false; // Track if a task is currently running
 
 // Setup side panel behavior
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(error => console.error(error));
@@ -31,6 +32,15 @@ chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(error 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (tabId && changeInfo.status === 'complete' && tab.url?.startsWith('http')) {
     await injectBuildDomTreeScripts(tabId);
+
+    // If task is running, show glowing border on newly loaded page
+    if (isTaskRunning) {
+      try {
+        await chrome.tabs.sendMessage(tabId, { type: 'task_start' });
+      } catch (error) {
+        // Ignore errors if content script not ready yet
+      }
+    }
   }
 });
 
@@ -90,6 +100,14 @@ chrome.runtime.onConnect.addListener(port => {
             if (!message.tabId) return port.postMessage({ type: 'error', error: t('bg_errors_noTabId') });
 
             logger.info('new_task', message.tabId, message.task);
+
+            // Cleanup previous executor if exists
+            if (currentExecutor) {
+              logger.info('Cleaning up previous executor before starting new task');
+              await currentExecutor.cleanup();
+              currentExecutor = null;
+            }
+
             currentExecutor = await setupExecutor(message.taskId, message.task, browserContext);
             subscribeToExecutorEvents(currentExecutor);
 
@@ -281,12 +299,12 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
   const navigatorProviderConfig = providers[navigatorModel.provider];
   const navigatorLLM = createChatModel(navigatorProviderConfig, navigatorModel);
 
-  let plannerLLM: BaseChatModel | null = null;
-  const plannerModel = agentModels[AgentNameEnum.Planner];
-  if (plannerModel) {
-    // Log the provider config being used for the planner
-    const plannerProviderConfig = providers[plannerModel.provider];
-    plannerLLM = createChatModel(plannerProviderConfig, plannerModel);
+  let thinkerLLM: BaseChatModel | null = null;
+  const thinkerModel = agentModels[AgentNameEnum.thinker];
+  if (thinkerModel) {
+    // Log the provider config being used for the thinker
+    const thinkerProviderConfig = providers[thinkerModel.provider];
+    thinkerLLM = createChatModel(thinkerProviderConfig, thinkerModel);
   }
 
   // Apply firewall settings to browser context
@@ -310,19 +328,37 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
   });
 
   const executor = new Executor(task, taskId, browserContext, navigatorLLM, {
-    plannerLLM: plannerLLM ?? navigatorLLM,
+    thinkerLLM: thinkerLLM ?? navigatorLLM,
     agentOptions: {
       maxSteps: generalSettings.maxSteps,
       maxFailures: generalSettings.maxFailures,
       maxActionsPerStep: generalSettings.maxActionsPerStep,
       useVision: generalSettings.useVision,
-      useVisionForPlanner: true,
+      useVisionForthinker: true,
       planningInterval: generalSettings.planningInterval,
     },
     generalSettings: generalSettings,
   });
 
   return executor;
+}
+
+// Broadcast message to all tabs
+async function broadcastToAllTabs(message: { type: string }) {
+  try {
+    const tabs = await chrome.tabs.query({});
+    logger.info(`Broadcasting ${message.type} to ${tabs.length} tabs`);
+    for (const tab of tabs) {
+      if (tab.id) {
+        chrome.tabs.sendMessage(tab.id, message).catch(err => {
+          // Ignore errors for tabs that don't have content script
+          logger.debug(`Failed to send to tab ${tab.id}:`, err.message);
+        });
+      }
+    }
+  } catch (error) {
+    logger.error('Failed to broadcast message to tabs:', error);
+  }
 }
 
 // Update subscribeToExecutorEvents to use port
@@ -340,12 +376,23 @@ async function subscribeToExecutorEvents(executor: Executor) {
       logger.error('Failed to send message to side panel:', error);
     }
 
+    // Show glowing border when task starts
+    if (event.state === ExecutionState.TASK_START) {
+      isTaskRunning = true;
+      await broadcastToAllTabs({ type: 'task_start' });
+    }
+
+    // Hide glowing border when task ends
     if (
       event.state === ExecutionState.TASK_OK ||
       event.state === ExecutionState.TASK_FAIL ||
       event.state === ExecutionState.TASK_CANCEL
     ) {
+      isTaskRunning = false;
+      await broadcastToAllTabs({ type: 'task_end' });
       await currentExecutor?.cleanup();
+      // Don't set currentExecutor to null here - let new_task handle it
+      // This allows follow_up tasks to continue working
     }
   });
 }
