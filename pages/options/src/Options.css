@@ -37,10 +37,10 @@ code {
   }
   
   .dark-mode-bg {
-    background-color: #1e293b !important; /* slate-800 */
+    background-color: #000000 !important; /* slate-800 */
   }
   
   .dark-mode-border {
-    border-color: #475569 !important; /* slate-600 */
+    border-color: rgb(0, 0, 0) !important; /* slate-600 */
   }
 }

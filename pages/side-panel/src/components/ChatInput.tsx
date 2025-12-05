@@ -242,9 +242,7 @@ export default function ChatInput({
                 <button
                   type="button"
                   onClick={() => handleRemoveFile(index)}
-                  className={`ml-1 rounded-sm transition-colors ${
-                    isDarkMode ? 'hover:bg-slate-600' : 'hover:bg-gray-300'
-                  }`}
+                  className={`ml-1 rounded-sm transition-colors ${isDarkMode ? 'hover:bg-black' : 'hover:bg-gray-300'}`}
                   aria-label={`Remove ${file.name}`}>
                   <span className="text-xs">✕</span>
                 </button>
@@ -270,7 +268,7 @@ export default function ChatInput({
                 ? 'bg-black text-white placeholder:text-gray-500'
                 : 'bg-white'
           }`}
-          placeholder={attachedFiles.length > 0 ? 'Add a message (optional)...' : t('chat_input_placeholder')}
+          placeholder={attachedFiles.length > 0 ? 'Add a message (optional)...' : 'Plan, search, do anything...'}
           aria-label={t('chat_input_editor')}
         />
 
@@ -296,10 +294,10 @@ export default function ChatInput({
                 : 'bg-white'
           }`}>
           <div className="flex gap-2 text-gray-500">
-            {/* Agent icon */}
-            <div className="flex items-center gap-1.5 px-1">
-              <span className="text-sm">😊</span>
-              <span className={`text-xs ${isDarkMode ? 'text-white' : 'text-gray-600'}`}>Agent</span>
+            {/* Agent badge - updated to match screenshot styling */}
+            <div className="flex items-center gap-1.5 rounded-full border px-2.5 py-1">
+              <span className="text-xs">😊</span>
+              <span className={`text-xs font-medium ${isDarkMode ? 'text-white' : 'text-gray-700'}`}>Agent</span>
             </div>
 
             {onMicClick && (
@@ -353,7 +351,7 @@ export default function ChatInput({
               type="submit"
               disabled={isSendButtonDisabled}
               aria-disabled={isSendButtonDisabled}
-              className={`rounded-md bg-[#19C2FF] px-3 py-1 text-white transition-colors hover:enabled:bg-[#0073DC] ${isSendButtonDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
+              className={`rounded-md bg-blue-600 px-3 py-1 text-white transition-colors hover:enabled:bg-blue-700 ${isSendButtonDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
               {t('chat_buttons_send')}
             </button>
           )}

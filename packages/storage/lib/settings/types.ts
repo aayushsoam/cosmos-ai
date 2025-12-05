@@ -46,7 +46,15 @@ export const llmProviderModelNames = {
     'Llama-4-Maverick-17B-128E-Instruct-FP8',
     'Llama-4-Scout-17B-16E-Instruct-FP8',
   ],
-  [ProviderTypeEnum.GitHub]: ['gpt-4o', 'gpt-4o-mini', 'Phi-4', 'Llama-3.3-70B-Instruct', 'Mistral-large-2411'],
+  [ProviderTypeEnum.GitHub]: [
+    'microsoft/phi-4-reasoning',
+    'microsoft/phi-4-multimodal-instruct',
+    'microsoft/phi-4-mini-reasoning',
+    'microsoft/phi-4-mini-instruct',
+    'microsoft/phi-4',
+    'openai/gpt-4o',
+    'deepseek/deepseek-v3-0324',
+  ],
   // Custom OpenAI providers don't have predefined models as they are user-defined
 };
 

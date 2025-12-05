@@ -47,13 +47,13 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({ isDarkMode
     return (
       <section className="space-y-6">
         <div
-          className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-blue-100 bg-gray-50'} p-6 text-left shadow-sm`}>
+          className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-black' : 'border-blue-100 bg-gray-50'} p-6 text-left shadow-sm`}>
           <h2 className={`mb-4 text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
             Analytics Settings
           </h2>
           <div className="animate-pulse">
-            <div className={`mb-2 h-4 w-3/4 rounded ${isDarkMode ? 'bg-slate-600' : 'bg-gray-200'}`}></div>
-            <div className={`h-4 w-1/2 rounded ${isDarkMode ? 'bg-slate-600' : 'bg-gray-200'}`}></div>
+            <div className={`mb-2 h-4 w-3/4 rounded ${isDarkMode ? 'bg-black' : 'bg-gray-200'}`}></div>
+            <div className={`h-4 w-1/2 rounded ${isDarkMode ? 'bg-black' : 'bg-gray-200'}`}></div>
           </div>
         </div>
       </section>
@@ -64,7 +64,7 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({ isDarkMode
     return (
       <section className="space-y-6">
         <div
-          className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-blue-100 bg-gray-50'} p-6 text-left shadow-sm`}>
+          className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-black' : 'border-blue-100 bg-gray-50'} p-6 text-left shadow-sm`}>
           <h2 className={`mb-4 text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
             Analytics Settings
           </h2>
@@ -77,7 +77,7 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({ isDarkMode
   return (
     <section className="space-y-6">
       <div
-        className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-blue-100 bg-gray-50'} p-6 text-left shadow-sm`}>
+        className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-black' : 'border-blue-100 bg-gray-50'} p-6 text-left shadow-sm`}>
         <h2 className={`mb-4 text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
           Analytics Settings
         </h2>
@@ -85,7 +85,7 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({ isDarkMode
         <div className="space-y-6">
           {/* Main toggle */}
           <div
-            className={`my-6 rounded-lg border p-4 ${isDarkMode ? 'border-slate-700 bg-slate-700' : 'border-gray-200 bg-gray-100'}`}>
+            className={`my-6 rounded-lg border p-4 ${isDarkMode ? 'border-slate-700 bg-black' : 'border-gray-200 bg-gray-100'}`}>
             <div className="flex items-center justify-between">
               <label
                 htmlFor="analytics-enabled"
@@ -121,7 +121,7 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({ isDarkMode
 
           {/* Information about what we collect */}
           <div
-            className={`rounded-md border p-4 ${isDarkMode ? 'border-slate-600 bg-slate-700' : 'border-gray-200 bg-gray-100'}`}>
+            className={`rounded-md border p-4 ${isDarkMode ? 'border-slate-600 bg-black' : 'border-gray-200 bg-gray-100'}`}>
             <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-4`}>
               What we collect:
             </h3>

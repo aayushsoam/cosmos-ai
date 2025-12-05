@@ -44,17 +44,17 @@ export const SummarizePage: React.FC<SummarizePageProps> = ({ tabSummaries, isDa
       }`}>
       <div
         className={`relative max-h-[90vh] w-[90vw] max-w-4xl overflow-hidden rounded-lg shadow-2xl ${
-          isDarkMode ? 'bg-slate-900' : 'bg-white'
+          isDarkMode ? 'bg-black' : 'bg-white'
         }`}>
         {/* Header */}
         <div
           className={`border-b px-6 py-4 flex items-center justify-between ${
-            isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-gray-50'
+            isDarkMode ? 'border-slate-700 bg-black' : 'border-gray-200 bg-gray-50'
           }`}>
           <h2 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Content Summary</h2>
           <button
             onClick={onClose}
-            className={`rounded-lg p-2 transition-colors ${isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
+            className={`rounded-lg p-2 transition-colors ${isDarkMode ? 'hover:bg-black' : 'hover:bg-gray-200'}`}
             title="Close">
             <FaTimes className="h-5 w-5" />
           </button>
@@ -68,10 +68,10 @@ export const SummarizePage: React.FC<SummarizePageProps> = ({ tabSummaries, isDa
               className={`rounded-lg border-2 p-4 transition-all cursor-pointer ${
                 selectedUrl === summary.url
                   ? isDarkMode
-                    ? 'border-blue-500 bg-slate-800'
+                    ? 'border-blue-500 bg-black'
                     : 'border-blue-400 bg-blue-50'
                   : isDarkMode
-                    ? 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                    ? 'border-slate-700 bg-black/50 hover:border-slate-600'
                     : 'border-gray-300 bg-gray-50 hover:border-gray-400'
               }`}
               onClick={() => setSelectedUrl(summary.url)}>
@@ -139,7 +139,7 @@ export const SummarizePage: React.FC<SummarizePageProps> = ({ tabSummaries, isDa
         {/* Footer */}
         <div
           className={`border-t px-6 py-4 flex items-center justify-between ${
-            isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-gray-50'
+            isDarkMode ? 'border-slate-700 bg-black' : 'border-gray-200 bg-gray-50'
           }`}>
           <div className="text-sm">
             <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Selected Page</p>
@@ -152,9 +152,7 @@ export const SummarizePage: React.FC<SummarizePageProps> = ({ tabSummaries, isDa
             <button
               onClick={onClose}
               className={`rounded-lg px-4 py-2 font-medium transition-colors ${
-                isDarkMode
-                  ? 'bg-slate-700 text-gray-200 hover:bg-slate-600'
-                  : 'bg-gray-300 text-gray-800 hover:bg-gray-400'
+                isDarkMode ? 'bg-black text-gray-200 hover:bg-black' : 'bg-gray-300 text-gray-800 hover:bg-gray-400'
               }`}>
               Cancel
             </button>

@@ -70,7 +70,6 @@ function MessageBlock({ message, isSameActor, isDarkMode = false }: MessageBlock
             ) : (
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
-                className="markdown-content"
                 components={{
                   h1: ({ children }) => <h1 className="mb-3 mt-4 text-2xl font-bold text-white">{children}</h1>,
                   h2: ({ children }) => <h2 className="mb-2 mt-3 text-xl font-bold text-white">{children}</h2>,
@@ -79,14 +78,19 @@ function MessageBlock({ message, isSameActor, isDarkMode = false }: MessageBlock
                   p: ({ children }) => <p className="mb-2 text-white">{children}</p>,
                   strong: ({ children }) => <strong className="font-bold text-white">{children}</strong>,
                   em: ({ children }) => <em className="italic text-white">{children}</em>,
-                  code: ({ inline, children }) =>
-                    inline ? (
-                      <code className="rounded bg-gray-800 px-1.5 py-0.5 text-sm text-white">{children}</code>
-                    ) : (
-                      <code className="block overflow-x-auto rounded bg-gray-800 p-3 text-sm text-white">
+                  code: ({ className, children, ...props }) => {
+                    const match = /language-(\w+)/.exec(className || '');
+                    const isInline = !className;
+                    return isInline ? (
+                      <code className="rounded bg-gray-800 px-1.5 py-0.5 text-sm text-white" {...props}>
                         {children}
                       </code>
-                    ),
+                    ) : (
+                      <code className="block overflow-x-auto rounded bg-gray-800 p-3 text-sm text-white" {...props}>
+                        {children}
+                      </code>
+                    );
+                  },
                   pre: ({ children }) => <pre className="mb-2 overflow-x-auto rounded bg-gray-800 p-3">{children}</pre>,
                   ul: ({ children }) => <ul className="mb-2 ml-6 list-disc text-white">{children}</ul>,
                   ol: ({ children }) => <ol className="mb-2 ml-6 list-decimal text-white">{children}</ol>,

@@ -320,8 +320,8 @@ All components support dark mode out of the box:
 ### Color Palette
 ```tsx
 // Dark mode
-bg-slate-900   // Main background
-bg-slate-800   // Secondary
+bg-black   // Main background
+bg-black   // Secondary
 border-slate-700
 text-white
 text-gray-300  // Secondary text
@@ -497,7 +497,7 @@ export const EnhancedSidePanel = () => {
   }, []);
 
   return (
-    <div className="flex flex-col h-full bg-slate-900 text-white">
+    <div className="flex flex-col h-full bg-black text-white">
       <BrowserTabs isDarkMode={true} />
       <ChatInput 
         onSendMessage={handleSendMessage}

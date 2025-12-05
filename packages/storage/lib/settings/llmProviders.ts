@@ -131,7 +131,7 @@ export function getDefaultProviderConfig(providerId: string): ProviderConfig {
             : providerId === ProviderTypeEnum.Llama
               ? 'https://api.llama.com/v1'
               : providerId === ProviderTypeEnum.GitHub
-                ? 'https://models.inference.ai.azure.com'
+                ? 'https://models.github.ai/inference'
                 : undefined,
         modelNames: [...(llmProviderModelNames[providerId] || [])],
         createdAt: Date.now(),

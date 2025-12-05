@@ -17,71 +17,71 @@ const PROVIDER_OPTIONS: Record<string, ProviderOption> = {
     id: ProviderTypeEnum.OpenAI,
     name: 'OpenAI',
     icon: SiOpenai,
-    color: 'text-black dark:text-white',
-    bgColor: 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700',
+    color: 'text-white',
+    bgColor: 'bg-black text-white border border-gray-700',
   },
   [ProviderTypeEnum.Anthropic]: {
     id: ProviderTypeEnum.Anthropic,
     name: 'Anthropic',
     icon: FaRobot,
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800',
+    color: 'text-white',
+    bgColor: 'bg-black text-white border border-gray-700',
   },
   [ProviderTypeEnum.DeepSeek]: {
     id: ProviderTypeEnum.DeepSeek,
     name: 'DeepSeek',
     icon: FaTerminal,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800',
+    color: 'text-white',
+    bgColor: 'bg-black text-white border border-gray-700',
   },
   [ProviderTypeEnum.Gemini]: {
     id: ProviderTypeEnum.Gemini,
     name: 'Gemini',
     icon: FaGooglePlay,
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800',
+    color: 'text-white',
+    bgColor: 'bg-black text-white border border-gray-700',
   },
   [ProviderTypeEnum.Groq]: {
     id: ProviderTypeEnum.Groq,
     name: 'Groq',
     icon: FaTerminal,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800',
+    color: 'text-white',
+    bgColor: 'bg-black text-white border border-gray-700',
   },
   [ProviderTypeEnum.Ollama]: {
     id: ProviderTypeEnum.Ollama,
     name: 'Ollama',
     icon: FiServer,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800',
+    color: 'text-white',
+    bgColor: 'bg-black text-white border border-gray-700',
   },
   [ProviderTypeEnum.AzureOpenAI]: {
     id: ProviderTypeEnum.AzureOpenAI,
     name: 'Azure OpenAI',
     icon: SiAmazon,
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800',
+    color: 'text-white',
+    bgColor: 'bg-black text-white border border-gray-700',
   },
   [ProviderTypeEnum.OpenRouter]: {
     id: ProviderTypeEnum.OpenRouter,
     name: 'OpenRouter',
     icon: FiGlobe,
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800',
+    color: 'text-white',
+    bgColor: 'bg-black text-white border border-gray-700',
   },
   [ProviderTypeEnum.Cerebras]: {
     id: ProviderTypeEnum.Cerebras,
     name: 'Cerebras',
     icon: FaRobot,
-    color: 'text-pink-600',
-    bgColor: 'bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800',
+    color: 'text-white',
+    bgColor: 'bg-black text-white border border-gray-700',
   },
   [ProviderTypeEnum.Llama]: {
     id: ProviderTypeEnum.Llama,
     name: 'Llama',
     icon: FaRobot,
-    color: 'text-red-600',
-    bgColor: 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800',
+    color: 'text-white',
+    bgColor: 'bg-black text-white border border-gray-700',
   },
 };
 
@@ -90,7 +90,7 @@ const CUSTOM_PROVIDER_OPTION: ProviderOption = {
   name: 'OpenAI-compatible API Provider',
   icon: FiGlobe,
   color: 'text-gray-600',
-  bgColor: 'bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-800',
+  bgColor: 'bg-black text-white border border-gray-700',
 };
 
 interface ProviderSelectorProps {
@@ -122,7 +122,7 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({
   return (
     <div
       className={`absolute z-20 mt-2 max-h-[500px] w-full overflow-y-auto rounded-lg border shadow-lg ${
-        isDarkMode ? 'border-slate-600 bg-slate-800 shadow-slate-900/50' : 'border-gray-200 bg-white shadow-gray-100'
+        isDarkMode ? 'border-slate-600 bg-black shadow-slate-900/50' : 'border-gray-200 bg-white shadow-gray-100'
       }`}>
       <div className="p-3">
         <div className="grid grid-cols-2 gap-3">

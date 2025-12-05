@@ -187,7 +187,7 @@ const handleTaskState = useCallback(
 
 ```tsx
 return (
-  <div className={`flex flex-col h-full ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+  <div className={`flex flex-col h-full ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
     {/* Browser Tabs - at the top */}
     <BrowserTabs isDarkMode={isDarkMode} />
     
@@ -304,9 +304,9 @@ Selected URL Returned
 ### Dark Mode Colors
 ```tsx
 // Background
-bg-slate-900  // Main background
-bg-slate-800  // Secondary surface
-bg-slate-700  // Tertiary surface
+bg-black  // Main background
+bg-black  // Secondary surface
+bg-black  // Tertiary surface
 
 // Text
 text-white    // Primary text

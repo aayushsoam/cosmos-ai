@@ -1,19 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { FiSettings } from 'react-icons/fi';
-import { PiPlusBold } from 'react-icons/pi';
-import { GrHistory } from 'react-icons/gr';
 import { type Message, Actors, chatHistoryStore, agentModelStore, generalSettingsStore } from '@extension/storage';
 import favoritesStorage, { type FavoritePrompt } from '@extension/storage/lib/prompt/favorites';
 import { t } from '@extension/i18n';
-import MessageList from './components/MessageList';
-import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
-import BookmarkList from './components/BookmarkList';
-import ShinyText from './components/ShinyText';
 import TabSelectorModal from './components/TabSelectorModal';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
+import './styles/eclipse-ui.css';
+import EclipseHeader from './components/EclipseHeader';
+import EclipseContent from './components/EclipseContent';
+import EclipseFooter from './components/EclipseFooter';
 
 // Declare chrome API types
 declare global {
@@ -64,7 +61,25 @@ const SidePanel = () => {
   >([]);
   const [selectedTabUrl, setSelectedTabUrl] = useState<string>('');
   const [tabs, setTabs] = useState<Array<{ id: number; title: string; url: string; favicon?: string }>>([]);
+  const [selectedTabs, setSelectedTabs] = useState<
+    Array<{ id: number; title: string; url: string; favIconUrl?: string }>
+  >([]);
+  const [currentActiveTab, setCurrentActiveTab] = useState<{
+    id: number;
+    title: string;
+    url: string;
+    favIconUrl?: string;
+  } | null>(null);
+
+  // Debug: Log selected tabs changes
+  useEffect(() => {
+    console.log('Selected tabs updated:', selectedTabs);
+  }, [selectedTabs]);
+  const [showCurrentTabIndicator, setShowCurrentTabIndicator] = useState<boolean>(false);
+  const [hasStartedChat, setHasStartedChat] = useState<boolean>(false);
+  const [selectedMode, setSelectedMode] = useState<string>('ask');
   const sessionIdRef = useRef<string | null>(null);
+  const lastTaskTextRef = useRef<string>('');
   const isReplayingRef = useRef<boolean>(false);
   const portRef = useRef<chrome.runtime.Port | null>(null);
   const heartbeatIntervalRef = useRef<number | null>(null);
@@ -247,7 +262,8 @@ const SidePanel = () => {
             case ExecutionState.TASK_START:
               // Reset historical session flag when a new task starts
               setIsHistoricalSession(false);
-              setCurrentAgent(null);
+              // Don't reset currentAgent - let it show initial status if in agent mode
+              // It will be updated by individual agent events (thinker, navigator)
               setAgentHistory([]);
               setShowAgentHistory(false);
               break;
@@ -257,6 +273,12 @@ const SidePanel = () => {
               setShowStopButton(false);
               setIsReplaying(false);
               skip = false; // Show completion message with final answer
+
+              // Check if task contains summarize keywords and open summarization page
+              const taskText = lastTaskTextRef.current;
+              if (taskText && containsSummarizeKeywords(taskText)) {
+                openSummarizationPage(sessionIdRef.current || '', taskText);
+              }
               break;
             case ExecutionState.TASK_FAIL:
               setIsFollowUpMode(false); // Executor cleanup happens, so reset to allow new tasks
@@ -672,6 +694,13 @@ const SidePanel = () => {
       setInputEnabled(false);
       setShowStopButton(true);
 
+      // Show initial agent status if in agent mode
+      if (selectedMode === 'agent') {
+        // Set initial status to show that agent is starting (Planning phase)
+        setCurrentAgent({ type: 'thinker', status: 'running' });
+        console.log('Agent mode: Setting initial Planning status');
+      }
+
       // Create a new chat session for this task if not in follow-up mode
       if (!isFollowUpMode) {
         // Use display text for session title if available, otherwise use full text
@@ -685,12 +714,38 @@ const SidePanel = () => {
         const sessionId = newSession.id;
         setCurrentSessionId(sessionId);
         sessionIdRef.current = sessionId;
+
+        // Store task text for summarization detection
+        lastTaskTextRef.current = text.toLowerCase();
+      }
+
+      // Extract links from text
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      const links = text.match(urlRegex) || [];
+
+      // Prepare tabs data (include current tab if indicator is shown)
+      const tabsToInclude: Array<{ id: number; title: string; url: string; favIconUrl?: string }> = [];
+
+      // Add selected tabs
+      if (selectedTabs.length > 0) {
+        tabsToInclude.push(...selectedTabs);
+      }
+
+      // Add current tab if indicator is shown
+      if (showCurrentTabIndicator && currentActiveTab) {
+        // Check if current tab is not already in selected tabs
+        const isAlreadyIncluded = selectedTabs.some(t => t.id === currentActiveTab.id);
+        if (!isAlreadyIncluded) {
+          tabsToInclude.push(currentActiveTab);
+        }
       }
 
       const userMessage = {
         actor: Actors.USER,
         content: displayText || text, // Use display text for chat UI, full text for background service
         timestamp: Date.now(),
+        tabs: tabsToInclude.length > 0 ? tabsToInclude : undefined,
+        links: links.length > 0 ? links : undefined,
       };
 
       // Pass the sessionId directly to appendMessage
@@ -1134,58 +1189,157 @@ const SidePanel = () => {
     }
   };
 
+  // Convert messages to Eclipse format
+  const eclipseMessages: {
+    id?: string;
+    type: 'user' | 'assistant' | 'system';
+    content: string;
+    timestamp?: number;
+  }[] = messages.map(msg => ({
+    id: `${msg.actor}-${msg.timestamp}`,
+    type: msg.actor === Actors.USER ? 'user' : msg.actor === Actors.SYSTEM ? 'system' : 'assistant',
+    content: msg.content,
+    timestamp: msg.timestamp,
+  }));
+
+  // Update hasStartedChat when messages change
+  useEffect(() => {
+    if (messages.length > 0 && !hasStartedChat) {
+      setHasStartedChat(true);
+    }
+  }, [messages.length, hasStartedChat]);
+
+  // Get current active tab
+  useEffect(() => {
+    const getCurrentTab = async () => {
+      try {
+        const currentTabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (currentTabs[0]) {
+          setCurrentActiveTab({
+            id: currentTabs[0].id || 0,
+            title: currentTabs[0].title || 'Untitled',
+            url: currentTabs[0].url || 'about:blank',
+            favIconUrl: currentTabs[0].favIconUrl,
+          });
+        }
+      } catch (error) {
+        console.error('Error getting current tab:', error);
+      }
+    };
+    getCurrentTab();
+  }, []);
+
+  const handleAddTab = (tab: { id: number; title: string; url: string; favIconUrl?: string }): boolean => {
+    console.log('🔵 handleAddTab called with:', tab.title, tab.id);
+    console.log('Current selectedTabs count:', selectedTabs.length);
+    console.log('showCurrentTabIndicator:', showCurrentTabIndicator);
+
+    // Check if already selected - if yes, don't add
+    const alreadySelected = selectedTabs.find(t => t.id === tab.id);
+    if (alreadySelected) {
+      console.log('⚠️ Tab already selected, skipping add');
+      return false;
+    }
+
+    const totalSelected = selectedTabs.length + (showCurrentTabIndicator ? 1 : 0);
+    console.log('Total selected:', totalSelected, 'Max: 5');
+
+    if (totalSelected >= 5) {
+      console.log('❌ Cannot add tab - limit reached (5 tabs max)');
+      return false;
+    }
+
+    // Don't add if it's the current active tab (unless current tab indicator is not shown)
+    if (currentActiveTab && currentActiveTab.id === tab.id && showCurrentTabIndicator) {
+      console.log('⚠️ Tab is current active tab, skipping');
+      return false;
+    }
+
+    // Add the tab
+    setSelectedTabs(prev => {
+      const updated = [...prev, tab];
+      console.log('✅ Tab added successfully:', tab.title, 'Total selected:', updated.length);
+      console.log('Updated selectedTabs:', updated);
+      return updated;
+    });
+    return true;
+  };
+
+  const handleRemoveTab = (tabId: number) => {
+    setSelectedTabs(prev => {
+      const filtered = prev.filter(t => t.id !== tabId);
+      console.log('Tab removed:', tabId, 'Remaining:', filtered.length);
+      return filtered;
+    });
+  };
+
+  const handleToggleCurrentTab = () => {
+    if (currentActiveTab) {
+      if (showCurrentTabIndicator) {
+        setShowCurrentTabIndicator(false);
+      } else {
+        setShowCurrentTabIndicator(true);
+      }
+    }
+  };
+
+  const handleRemoveCurrentTab = () => {
+    setShowCurrentTabIndicator(false);
+  };
+
+  const handleFooterSendMessage = (text: string, mode?: string) => {
+    handleSendMessage(text);
+  };
+
+  const handleModeChange = (mode: string) => {
+    setSelectedMode(mode);
+  };
+
+  // Check if task contains summarize keywords
+  const containsSummarizeKeywords = (text: string): boolean => {
+    const summarizeKeywords = [
+      'summarize',
+      'summarise',
+      'summary',
+      'summarization',
+      'summarisation',
+      'summarize karo',
+      'summarize kar do',
+      'summary banao',
+      'summary do',
+    ];
+
+    return summarizeKeywords.some(keyword => text.includes(keyword));
+  };
+
+  // Open summarization page
+  const openSummarizationPage = async (taskId: string, taskText: string) => {
+    try {
+      const summarizationUrl = chrome.runtime.getURL('summarization/index.html');
+      const url = `${summarizationUrl}?taskId=${encodeURIComponent(taskId)}&task=${encodeURIComponent(taskText)}`;
+
+      await chrome.tabs.create({
+        url: url,
+        active: true,
+      });
+    } catch (error) {
+      console.error('Failed to open summarization page:', error);
+    }
+  };
+
   return (
-    <div className="bg-black">
-      <div className="flex h-screen flex-col overflow-hidden rounded-2xl border border-white bg-black">
-        <header className="header relative border-b border-white bg-black">
-          <div className="header-logo">
-            {showHistory ? (
-              <button
-                type="button"
-                onClick={() => handleBackToChat(false)}
-                className="cursor-pointer text-white hover:text-gray-300 transition-colors"
-                aria-label={t('nav_back_a11y')}>
-                {t('nav_back')}
-              </button>
-            ) : (
-              <div className="text-xl font-bold text-white">Cosmos AI</div>
-            )}
-          </div>
-          <div className="header-icons">
-            {!showHistory && (
-              <>
-                <button
-                  type="button"
-                  onClick={handleNewChat}
-                  onKeyDown={e => e.key === 'Enter' && handleNewChat()}
-                  className="header-icon cursor-pointer rounded-lg border border-white bg-black p-2 text-white transition-all hover:bg-white hover:text-black"
-                  aria-label={t('nav_newChat_a11y')}
-                  tabIndex={0}>
-                  <PiPlusBold size={20} />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleLoadHistory}
-                  onKeyDown={e => e.key === 'Enter' && handleLoadHistory()}
-                  className="header-icon cursor-pointer rounded-lg border border-white bg-black p-2 text-white transition-all hover:bg-white hover:text-black"
-                  aria-label={t('nav_loadHistory_a11y')}
-                  tabIndex={0}>
-                  <GrHistory size={20} />
-                </button>
-              </>
-            )}
-            <button
-              type="button"
-              onClick={() => chrome.runtime.openOptionsPage()}
-              onKeyDown={e => e.key === 'Enter' && chrome.runtime.openOptionsPage()}
-              className="header-icon cursor-pointer rounded-lg border border-white bg-black p-2 text-white transition-all hover:bg-white hover:text-black"
-              aria-label={t('nav_settings_a11y')}
-              tabIndex={0}>
-              <FiSettings size={20} />
-            </button>
-          </div>
-        </header>
-        {showHistory ? (
+    <div className="sidebar-container">
+      {showHistory ? (
+        <>
+          <EclipseHeader
+            hasStartedChat={hasStartedChat}
+            title="eclipse"
+            onNewChat={handleNewChat}
+            onLoadHistory={handleLoadHistory}
+            onOpenSettings={() => chrome.runtime.openOptionsPage()}
+            showHistory={showHistory}
+            onBackToChat={() => handleBackToChat(false)}
+          />
           <div className="flex-1 overflow-hidden">
             <ChatHistoryList
               sessions={chatSessions}
@@ -1196,23 +1350,29 @@ const SidePanel = () => {
               isDarkMode={isDarkMode}
             />
           </div>
-        ) : (
-          <>
-            {/* Show loading state while checking model configuration */}
-            {hasConfiguredModels === null && (
+        </>
+      ) : (
+        <>
+          {/* Show loading state while checking model configuration */}
+          {hasConfiguredModels === null && (
+            <div className="sidebar-container">
+              <EclipseHeader hasStartedChat={false} title="cosmos ai" />
               <div className="flex flex-1 items-center justify-center bg-black p-8 text-white">
                 <div className="text-center">
                   <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                   <p>{t('status_checkingConfig')}</p>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Show setup message when no models are configured */}
-            {hasConfiguredModels === false && (
+          {/* Show setup message when no models are configured */}
+          {hasConfiguredModels === false && (
+            <div className="sidebar-container">
+              <EclipseHeader hasStartedChat={false} title="cosmos ai" />
               <div className="flex flex-1 items-center justify-center bg-black p-8 text-white">
                 <div className="max-w-md text-center">
-                  <div className="mb-4 text-5xl font-bold text-white">Cosmos AI</div>
+                  <div className="mb-4 text-5xl font-bold text-white">cosmos ai</div>
                   <h3 className="mb-2 text-lg font-semibold text-white">{t('welcome_title')}</h3>
                   <p className="mb-4 text-white">{t('welcome_instruction')}</p>
                   <button
@@ -1222,140 +1382,49 @@ const SidePanel = () => {
                   </button>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Show normal chat interface when models are configured */}
-            {hasConfiguredModels === true && (
-              <>
-                {/* Browser Tabs Display */}
-                {tabs.length > 0 && (
-                  // eslint-disable-next-line tailwindcss/no-custom-classname
-                  <div className="scrollbar-hide flex gap-2 overflow-x-auto border-b border-white bg-black p-2">
-                    {tabs.map(tab => (
-                      <div
-                        key={tab.id}
-                        className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-white bg-black px-2.5 py-1.5 text-xs text-white transition-all hover:bg-white hover:text-black">
-                        {tab.favicon && <img src={tab.favicon} alt="" className="size-3 rounded" />}
-                        <span className="max-w-[80px] truncate">{new URL(tab.url).hostname.replace('www.', '')}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {messages.length === 0 && (
-                  <>
-                    <div className="mb-2 border-t border-white bg-black p-2">
-                      <ChatInput
-                        onSendMessage={handleSendMessage}
-                        onStopTask={handleStopTask}
-                        onMicClick={handleMicClick}
-                        isRecording={isRecording}
-                        isProcessingSpeech={isProcessingSpeech}
-                        disabled={!inputEnabled || isHistoricalSession}
-                        showStopButton={showStopButton}
-                        setContent={setter => {
-                          setInputTextRef.current = setter;
-                        }}
-                        isDarkMode={isDarkMode}
-                        historicalSessionId={isHistoricalSession && replayEnabled ? currentSessionId : null}
-                        onReplay={handleReplay}
-                        onCurrentTabClick={handleCurrentTabClick}
-                      />
-                    </div>
-                    <div className="flex-1 overflow-y-auto">
-                      <BookmarkList
-                        bookmarks={favoritePrompts}
-                        onBookmarkSelect={handleBookmarkSelect}
-                        onBookmarkUpdateTitle={handleBookmarkUpdateTitle}
-                        onBookmarkDelete={handleBookmarkDelete}
-                        onBookmarkReorder={handleBookmarkReorder}
-                        isDarkMode={isDarkMode}
-                      />
-                    </div>
-                  </>
-                )}
-                {/* Current Agent Status Display */}
-                {currentAgent && (
-                  <div className="border-b border-white bg-black px-3 py-2 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="text-white">
-                        {currentAgent.type === 'thinker'
-                          ? 'Thinker'
-                          : currentAgent.type === 'navigation'
-                            ? 'Navigator'
-                            : 'System'}
-                        :
-                      </span>
-                      <ShinyText text="running..." speed={2} className="text-white" />
-                    </div>
-                  </div>
-                )}
-
-                {/* Agent History Panel */}
-                {agentHistory.length > 0 && (
-                  <div className="border-b border-white bg-black text-xs">
-                    <button
-                      onClick={() => setShowAgentHistory(!showAgentHistory)}
-                      className="flex w-full items-center justify-between px-3 py-2 text-left text-white transition-colors hover:bg-gray-900">
-                      <span>History: {agentHistory.length} completed</span>
-                      <span className={`transition-transform${showAgentHistory ? 'rotate-180' : ''}`}>▼</span>
-                    </button>
-                    {showAgentHistory && (
-                      <div className="space-y-1 border-t border-white bg-black px-3 py-2">
-                        {agentHistory.map((item, idx) => (
-                          <div key={idx} className="flex items-center gap-2 text-xs">
-                            <span className="text-white">
-                              {item.type === 'thinker'
-                                ? 'Thinker'
-                                : item.type === 'navigation'
-                                  ? 'Navigator'
-                                  : 'System'}
-                              :
-                            </span>
-                            {item.status === 'completed' ? (
-                              <span className="text-white">✓ Done</span>
-                            ) : (
-                              <span className="text-white">✗ Error</span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {messages.length > 0 && (
-                  <div className="scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth bg-black p-2">
-                    <MessageList messages={messages} isDarkMode={isDarkMode} />
-                    <div ref={messagesEndRef} />
-                  </div>
-                )}
-                {messages.length > 0 && (
-                  <div className="border-t border-white bg-black p-2">
-                    <ChatInput
-                      onSendMessage={handleSendMessage}
-                      onStopTask={handleStopTask}
-                      onMicClick={handleMicClick}
-                      isRecording={isRecording}
-                      isProcessingSpeech={isProcessingSpeech}
-                      disabled={!inputEnabled || isHistoricalSession}
-                      showStopButton={showStopButton}
-                      setContent={setter => {
-                        setInputTextRef.current = setter;
-                      }}
-                      isDarkMode={isDarkMode}
-                      historicalSessionId={isHistoricalSession && replayEnabled ? currentSessionId : null}
-                      onReplay={handleReplay}
-                      onCurrentTabClick={handleCurrentTabClick}
-                    />
-                  </div>
-                )}
-                {/* Action Buttons */}
-              </>
-            )}
-          </>
-        )}
-      </div>
+          {/* Show normal chat interface when models are configured */}
+          {hasConfiguredModels === true && (
+            <>
+              <EclipseHeader
+                hasStartedChat={hasStartedChat}
+                title="cosmos ai"
+                onNewChat={handleNewChat}
+                onLoadHistory={handleLoadHistory}
+                onOpenSettings={() => chrome.runtime.openOptionsPage()}
+                showHistory={showHistory}
+              />
+              <EclipseContent
+                messages={eclipseMessages}
+                isTyping={showStopButton && !isReplaying}
+                isStreaming={false}
+                streamingContent=""
+                welcomeMessage="Your browser complex flows executed autonomously"
+                onChatStart={() => setHasStartedChat(true)}
+                currentAgent={currentAgent}
+                selectedMode={selectedMode}
+              />
+              <EclipseFooter
+                onSendMessage={handleFooterSendMessage}
+                selectedTabs={selectedTabs}
+                tabs={tabs.map(t => ({ id: t.id, title: t.title, url: t.url, favIconUrl: t.favicon }))}
+                showCurrentTabIndicator={showCurrentTabIndicator}
+                currentActiveTab={currentActiveTab}
+                onAddTab={handleAddTab}
+                onRemoveTab={handleRemoveTab}
+                onToggleCurrentTab={handleToggleCurrentTab}
+                onRemoveCurrentTab={handleRemoveCurrentTab}
+                totalSelected={selectedTabs.length + (showCurrentTabIndicator ? 1 : 0)}
+                maxLimit={5}
+                disabled={!inputEnabled || isHistoricalSession}
+                onModeChange={handleModeChange}
+              />
+            </>
+          )}
+        </>
+      )}
 
       {/* Tab Selector Modal */}
       <TabSelectorModal
@@ -1372,7 +1441,7 @@ const SidePanel = () => {
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-white bg-black p-3">
               <h2 className="text-sm font-bold text-white">📄 AI Summary</h2>
-              <button onClick={() => setShowSummarize(false)} className="rounded p-1 hover:bg-slate-700">
+              <button onClick={() => setShowSummarize(false)} className="rounded p-1 hover:bg-black">
                 ✕
               </button>
             </div>
@@ -1390,8 +1459,8 @@ const SidePanel = () => {
                     onClick={() => setSelectedTabUrl(summary.url)}
                     className={`cursor-pointer rounded border-2 p-2 transition-all ${
                       selectedTabUrl === summary.url
-                        ? 'border-blue-500 bg-slate-800'
-                        : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                        ? 'border-blue-500 bg-black'
+                        : 'border-slate-700 bg-black/50 hover:border-slate-600'
                     }`}>
                     <div className="flex items-start gap-2">
                       {summary.favicon && (
@@ -1410,10 +1479,10 @@ const SidePanel = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex gap-2 border-t border-sky-800 bg-slate-800 p-3">
+            <div className="flex gap-2 border-t border-sky-800 bg-black p-3">
               <button
                 onClick={() => setShowSummarize(false)}
-                className="flex-1 rounded bg-slate-700 px-2 py-1 text-xs font-medium text-gray-200 transition-colors hover:bg-slate-600">
+                className="flex-1 rounded bg-black px-2 py-1 text-xs font-medium text-gray-200 transition-colors hover:bg-black">
                 Cancel
               </button>
               <button

@@ -93,9 +93,9 @@ if (event.actor === Actors.thinker && event.state === ExecutionState.STEP_OK) {
 
 ```tsx
 {/* Browser Tabs - at very top */}
-<div className={`border-b flex overflow-x-auto gap-1 p-2 ${isDarkMode ? 'border-slate-700 bg-slate-900' : 'border-gray-200 bg-gray-50'}`}>
+<div className={`border-b flex overflow-x-auto gap-1 p-2 ${isDarkMode ? 'border-slate-700 bg-black' : 'border-gray-200 bg-gray-50'}`}>
   {tabs.map((tab) => (
-    <div key={tab.id} className={`flex items-center gap-1 px-2 py-1 rounded text-xs shrink-0 ${isDarkMode ? 'bg-slate-800 text-gray-300' : 'bg-gray-200 text-gray-700'}`}>
+    <div key={tab.id} className={`flex items-center gap-1 px-2 py-1 rounded text-xs shrink-0 ${isDarkMode ? 'bg-black text-gray-300' : 'bg-gray-200 text-gray-700'}`}>
       {tab.favicon && <img src={tab.favicon} alt="" className="h-3 w-3 rounded" />}
       <span className="max-w-[80px] truncate">{new URL(tab.url).hostname.replace('www.', '')}</span>
     </div>
@@ -107,7 +107,7 @@ if (event.actor === Actors.thinker && event.state === ExecutionState.STEP_OK) {
 
 {/* Agent Status Display */}
 {agentStatuses.length > 0 && (
-  <div className={`text-xs space-y-1 px-3 py-2 ${isDarkMode ? 'bg-slate-800 border-b border-slate-700' : 'bg-gray-100 border-b border-gray-200'}`}>
+  <div className={`text-xs space-y-1 px-3 py-2 ${isDarkMode ? 'bg-black border-b border-slate-700' : 'bg-gray-100 border-b border-gray-200'}`}>
     {agentStatuses.map((agent) => (
       <div key={agent.type} className="flex items-center gap-2">
         {agent.type === 'thinker' && <span>🧠</span>}
@@ -156,13 +156,13 @@ if (event.actor === Actors.thinker && event.state === ExecutionState.STEP_OK) {
 {/* Summary Modal */}
 {showSummarize && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2">
-    <div className={`rounded-lg shadow-xl max-h-[80vh] w-full max-w-md overflow-auto ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+    <div className={`rounded-lg shadow-xl max-h-[80vh] w-full max-w-md overflow-auto ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
       {/* Modal Header */}
-      <div className={`flex items-center justify-between border-b p-3 ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-gray-100'}`}>
+      <div className={`flex items-center justify-between border-b p-3 ${isDarkMode ? 'border-slate-700 bg-black' : 'border-gray-200 bg-gray-100'}`}>
         <h2 className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
           📄 AI Summary
         </h2>
-        <button onClick={() => setShowSummarize(false)} className={`p-1 rounded ${isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}>
+        <button onClick={() => setShowSummarize(false)} className={`p-1 rounded ${isDarkMode ? 'hover:bg-black' : 'hover:bg-gray-200'}`}>
           ✕
         </button>
       </div>
@@ -176,10 +176,10 @@ if (event.actor === Actors.thinker && event.state === ExecutionState.STEP_OK) {
             className={`cursor-pointer rounded border-2 p-2 transition-all ${
               selectedTabUrl === summary.url
                 ? isDarkMode
-                  ? 'border-blue-500 bg-slate-800'
+                  ? 'border-blue-500 bg-black'
                   : 'border-blue-400 bg-blue-50'
                 : isDarkMode
-                  ? 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                  ? 'border-slate-700 bg-black/50 hover:border-slate-600'
                   : 'border-gray-300 bg-gray-50'
             }`}
           >
@@ -203,10 +203,10 @@ if (event.actor === Actors.thinker && event.state === ExecutionState.STEP_OK) {
       </div>
 
       {/* Modal Footer */}
-      <div className={`flex gap-2 border-t p-3 ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-gray-100'}`}>
+      <div className={`flex gap-2 border-t p-3 ${isDarkMode ? 'border-slate-700 bg-black' : 'border-gray-200 bg-gray-100'}`}>
         <button
           onClick={() => setShowSummarize(false)}
-          className={`flex-1 rounded px-2 py-1 text-xs font-medium ${isDarkMode ? 'bg-slate-700 text-gray-200 hover:bg-slate-600' : 'bg-gray-300 text-gray-800'}`}
+          className={`flex-1 rounded px-2 py-1 text-xs font-medium ${isDarkMode ? 'bg-black text-gray-200 hover:bg-black' : 'bg-gray-300 text-gray-800'}`}
         >
           Cancel
         </button>

@@ -41,5 +41,11 @@
       "tailwindcss": {},
       "autoprefixer": {}
     }
+  },
+  "postcss.config.js": {
+    "plugins": {
+      "tailwindcss": {},
+      "autoprefixer": {}
+    }
   }
 }

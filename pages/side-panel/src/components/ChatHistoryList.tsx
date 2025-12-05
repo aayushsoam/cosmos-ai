@@ -40,7 +40,7 @@ const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
       </h2>
       {sessions.length === 0 ? (
         <div
-          className={`rounded-lg ${isDarkMode ? 'bg-slate-800 text-gray-400' : 'bg-white/30 text-gray-500'} p-4 text-center backdrop-blur-sm`}>
+          className={`rounded-lg ${isDarkMode ? 'bg-black text-gray-400' : 'bg-white/30 text-gray-500'} p-4 text-center backdrop-blur-sm`}>
           {t('chat_history_empty')}
         </div>
       ) : (
@@ -49,7 +49,7 @@ const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
             <div
               key={session.id}
               className={`group relative rounded-lg ${
-                isDarkMode ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white/50 hover:bg-white/70'
+                isDarkMode ? 'bg-black hover:bg-black' : 'bg-white/50 hover:bg-white/70'
               } p-3 backdrop-blur-sm transition-all`}>
               <button onClick={() => onSessionSelect(session.id)} className="w-full text-left" type="button">
                 <h3 className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
@@ -68,9 +68,7 @@ const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                     onSessionBookmark(session.id);
                   }}
                   className={`absolute right-2 top-2 rounded p-1 opacity-0 transition-opacity group-hover:opacity-100 ${
-                    isDarkMode
-                      ? 'bg-slate-700 text-sky-400 hover:bg-slate-600'
-                      : 'bg-white text-sky-500 hover:bg-gray-100'
+                    isDarkMode ? 'bg-black text-sky-400 hover:bg-black' : 'bg-white text-sky-500 hover:bg-gray-100'
                   }`}
                   aria-label={t('chat_history_bookmark')}
                   type="button">
@@ -85,9 +83,7 @@ const ChatHistoryList: React.FC<ChatHistoryListProps> = ({
                   onSessionDelete(session.id);
                 }}
                 className={`absolute bottom-2 right-2 rounded p-1 opacity-0 transition-opacity group-hover:opacity-100 ${
-                  isDarkMode
-                    ? 'bg-slate-700 text-gray-400 hover:bg-slate-600'
-                    : 'bg-white text-gray-500 hover:bg-gray-100'
+                  isDarkMode ? 'bg-black text-gray-400 hover:bg-black' : 'bg-white text-gray-500 hover:bg-gray-100'
                 }`}
                 aria-label={t('chat_history_delete')}
                 type="button">

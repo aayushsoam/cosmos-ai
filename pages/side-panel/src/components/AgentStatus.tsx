@@ -1,5 +1,5 @@
 import { ShinyTextDisplay } from './ShinyText';
-import { FaBrain, FaRobot, FaGears } from 'react-icons/fa';
+import { FaBrain, FaRobot, FaCog } from 'react-icons/fa';
 
 export type AgentType = 'thinker' | 'system' | 'navigation';
 
@@ -22,9 +22,9 @@ export const AgentStatus: React.FC<AgentStatusProps> = ({ agents, isDarkMode = t
       case 'navigation':
         return <FaRobot className="h-5 w-5 text-blue-400" />;
       case 'system':
-        return <FaGears className="h-5 w-5 text-green-400" />;
+        return <FaCog className="h-5 w-5 text-green-400" />;
       default:
-        return <FaGears className="h-5 w-5 text-gray-400" />;
+        return <FaCog className="h-5 w-5 text-gray-400" />;
     }
   };
 
@@ -78,7 +78,7 @@ export const AgentStatus: React.FC<AgentStatusProps> = ({ agents, isDarkMode = t
   return (
     <div
       className={`space-y-2 rounded-lg border p-4 ${
-        isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-300 bg-gray-100'
+        isDarkMode ? 'border-slate-700 bg-black' : 'border-gray-300 bg-gray-100'
       }`}>
       <h3 className={`text-sm font-semibold mb-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Agent Status</h3>
 
@@ -86,7 +86,7 @@ export const AgentStatus: React.FC<AgentStatusProps> = ({ agents, isDarkMode = t
         <div
           key={agent.type}
           className={`flex items-start gap-3 rounded-md p-2 transition-all ${
-            isDarkMode ? 'bg-slate-700/50' : 'bg-gray-200/50'
+            isDarkMode ? 'bg-black/50' : 'bg-gray-200/50'
           }`}>
           {/* Icon */}
           <div className="mt-0.5 flex-shrink-0">{getAgentIcon(agent.type)}</div>

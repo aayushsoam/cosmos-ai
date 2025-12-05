@@ -3,23 +3,6 @@ import { createStorage } from '../base/base';
 import type { BaseStorage } from '../base/types';
 
 // Template data
-const defaultFavoritePrompts = [
-  {
-    title: '📄 Summarize Research Papers from Hugging Face',
-    content:
-      'You are an expert at summarizing research papers. Given the URL of a research paper hosted on Hugging Face, provide a concise summary highlighting the key points, methodologies, and findings of the paper. Ensure that the summary is clear and accessible to a broad audience.',
-  },
-  {
-    title: 'prompt for DALL·E 3',
-    content:
-      'Create a highly detailed and imaginative image of a futuristic cityscape at sunset, with flying cars, towering skyscrapers made of glass and metal, and vibrant neon lights reflecting off the water. The scene should evoke a sense of wonder and advanced technology, blending elements of cyberpunk and utopian design.',
-  },
-  {
-    title: 'find and research in web',
-    content:
-      'You are a highly skilled research assistant. Your task is to find accurate and up-to-date information on a given topic using reliable web sources. Once you have gathered the information, provide a comprehensive summary that includes key points, relevant data, and any important context. Ensure that your summary is well-organized and easy to understand.',
-  },
-];
 
 // Define the favorite prompt type
 export interface FavoritePrompt {
@@ -147,22 +130,7 @@ export function createFavoritesStorage(): FavoritePromptsStorage {
 
     getAllPrompts: async (): Promise<FavoritePrompt[]> => {
       const currentState = await favoritesStorage.get();
-      let prompts = currentState.prompts;
-
-      // Check if storage is in initial state (empty prompts array and nextId=1)
-      if (currentState.prompts.length === 0 && currentState.nextId === 1) {
-        // Initialize with default prompts
-        for (const prompt of defaultFavoritePrompts) {
-          await favoritesStorage.set(prev => {
-            const id = prev.nextId;
-            const newPrompt: FavoritePrompt = { id, title: prompt.title, content: prompt.content };
-            return { nextId: id + 1, prompts: [newPrompt, ...prev.prompts] };
-          });
-        }
-        const newState = await favoritesStorage.get();
-        prompts = newState.prompts;
-      }
-      return [...prompts].sort((a, b) => b.id - a.id);
+      return [...currentState.prompts].sort((a, b) => b.id - a.id);
     },
 
     getPromptById: async (id: number): Promise<FavoritePrompt | undefined> => {

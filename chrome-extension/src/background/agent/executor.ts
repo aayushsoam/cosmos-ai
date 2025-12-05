@@ -142,6 +142,11 @@ export class Executor {
       let latestPlanOutput: AgentOutput<thinkerOutput> | null = null;
       let navigatorDone = false;
 
+      // Adaptive planning interval based on task complexity and error rate
+      // Bias toward faster replanning for speed/accuracy
+      let adaptivePlanningInterval = Math.max(2, Math.min(context.options.planningInterval ?? 3, 4));
+      let lastPlanningStep = -1;
+
       for (step = 0; step < allowedMaxSteps; step++) {
         context.stepInfo = {
           stepNumber: context.nSteps,
@@ -153,10 +158,31 @@ export class Executor {
           break;
         }
 
-        // Run thinker periodically for guidance
-        if (this.thinker && (context.nSteps % context.options.planningInterval === 0 || navigatorDone)) {
+        // Adaptive planning: adjust interval based on performance
+        const stepsSinceLastPlanning = context.nSteps - lastPlanningStep;
+        const shouldPlan =
+          stepsSinceLastPlanning >= adaptivePlanningInterval ||
+          navigatorDone ||
+          context.consecutiveFailures > 0 ||
+          context.nSteps === 0; // Always plan on first step
+
+        // Run thinker with adaptive interval
+        if (this.thinker && shouldPlan) {
           navigatorDone = false;
+          lastPlanningStep = context.nSteps;
+
           latestPlanOutput = await this.runthinker();
+
+          // Adjust planning interval based on task progress
+          if (latestPlanOutput?.result) {
+            // If making good progress, keep interval tight but allow slight relaxation
+            if (latestPlanOutput.result.done === false && context.consecutiveFailures === 0) {
+              adaptivePlanningInterval = Math.min(adaptivePlanningInterval + 1, 5);
+            } else if (context.consecutiveFailures > 0 || latestPlanOutput.result.challenges) {
+              // If facing challenges, plan more frequently and reset failures faster
+              adaptivePlanningInterval = 2;
+            }
+          }
 
           // Check if task is complete after thinker run
           if (this.checkTaskCompletion(latestPlanOutput)) {
@@ -167,9 +193,11 @@ export class Executor {
         // Execute navigator
         navigatorDone = await this.navigate();
 
-        // If navigator indicates completion, the next periodic thinker run will validate it
+        // If navigator indicates completion, trigger immediate planning for validation
         if (navigatorDone) {
           logger.info('🔄 Navigator indicates completion - will be validated by next thinker run');
+          // Force planning on next iteration
+          lastPlanningStep = -1;
         }
       }
 
@@ -279,24 +307,44 @@ export class Executor {
       if (context.paused || context.stopped) {
         return false;
       }
+
       const navOutput = await this.navigator.execute();
+
       // check if the task is paused or stopped
       if (context.paused || context.stopped) {
         return false;
       }
+
       context.nSteps++;
+
       if (navOutput.error) {
-        // Don't throw immediately - treat as a failed step but continue
-        logger.warning(`Navigator step failed: ${navOutput.error}`);
+        // Enhanced error handling with context
+        logger.warning(
+          `Navigator step failed: ${navOutput.error} (Failures: ${context.consecutiveFailures + 1}/${context.options.maxFailures})`,
+        );
         context.consecutiveFailures++;
+
+        // If we're accumulating failures, trigger more frequent planning
         if (context.consecutiveFailures >= context.options.maxFailures) {
           throw new MaxFailuresReachedError(t('exec_errors_maxFailuresReached'));
         }
+
+        // If we have multiple consecutive failures, suggest re-planning
+        if (context.consecutiveFailures >= 3) {
+          logger.warning('Multiple consecutive failures detected - consider re-planning strategy');
+        }
+
         return false;
       }
+
       // Reset failure counter on successful step
+      if (context.consecutiveFailures > 0) {
+        logger.info(`✅ Recovered from ${context.consecutiveFailures} consecutive failures`);
+      }
       context.consecutiveFailures = 0;
+
       if (navOutput.result?.done) {
+        logger.info('✅ Navigator indicates task completion');
         return true;
       }
     } catch (error) {
@@ -314,6 +362,12 @@ export class Executor {
       }
       context.consecutiveFailures++;
       logger.warning(`Navigator error ${context.consecutiveFailures}/${context.options.maxFailures} - continuing`);
+
+      // Enhanced error recovery: if we're close to max failures, try to recover
+      if (context.consecutiveFailures >= context.options.maxFailures - 2) {
+        logger.warning('⚠️ Approaching max failures - attempting recovery strategy');
+      }
+
       if (context.consecutiveFailures >= context.options.maxFailures) {
         throw new MaxFailuresReachedError(t('exec_errors_maxFailuresReached'));
       }

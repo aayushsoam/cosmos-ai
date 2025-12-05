@@ -140,9 +140,9 @@ All elements use the dark mode palette:
 
 ```
 Header:          bg-black, text-sky-400
-Tabs:            bg-slate-800, text-gray-300, hover: bg-slate-700
+Tabs:            bg-black, text-gray-300, hover: bg-black
 Chat Input:      border-sky-900, bg-black
-Agent Status:    bg-slate-900, text-gray-300
+Agent Status:    bg-black, text-gray-300
   Running:       text-yellow-400 (shiny)
   Completed:     text-green-400
   Error:         text-red-400
@@ -151,9 +151,9 @@ Messages:        bg-black, text-sky-300
 Buttons:
   Summarize:     bg-blue-600, hover: bg-blue-500
   Done:          bg-green-600, hover: bg-green-500
-Modal:           bg-slate-900, border-sky-800
-Modal Header:    bg-slate-800, text-white
-Selected Tab:    border-blue-500, bg-slate-800
+Modal:           bg-black, border-sky-800
+Modal Header:    bg-black, text-white
+Selected Tab:    border-blue-500, bg-black
 ```
 
 ## Interaction Flow

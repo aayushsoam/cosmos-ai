@@ -272,7 +272,7 @@ Divider Margin:     my-3 (12px)
 ### Background Colors
 ```
 Primary:            bg-black (#000000)
-Secondary:          bg-slate-800 / bg-gray-800
+Secondary:          bg-black / bg-gray-800
 Tertiary:           bg-gray-900
 Hover:              bg-gray-800
 Active:             bg-blue-600

@@ -46,7 +46,7 @@ export const BrowserTabs: React.FC<BrowserTabsProps> = ({ isDarkMode = true, onT
       fetchTabs();
     };
 
-    const handleTabActivated = (activeInfo: chrome.tabs.TabActivatedInfo) => {
+    const handleTabActivated = (activeInfo: chrome.tabs.TabActiveInfo) => {
       setSelectedTabId(activeInfo.tabId);
       fetchTabs();
     };
@@ -107,7 +107,7 @@ export const BrowserTabs: React.FC<BrowserTabsProps> = ({ isDarkMode = true, onT
   }
 
   return (
-    <div className={`border-b ${isDarkMode ? 'border-slate-700 bg-slate-900' : 'border-gray-200 bg-gray-50'}`}>
+    <div className={`border-b ${isDarkMode ? 'border-slate-700 bg-black' : 'border-gray-200 bg-gray-50'}`}>
       {/* Scrollable tabs container */}
       <div
         ref={scrollContainerRef}
@@ -132,10 +132,10 @@ export const BrowserTabs: React.FC<BrowserTabsProps> = ({ isDarkMode = true, onT
               className={`group relative flex shrink-0 items-center gap-2 rounded-t-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
                 selectedTabId === tab.id
                   ? isDarkMode
-                    ? 'bg-slate-800 text-white'
+                    ? 'bg-black text-white'
                     : 'bg-white text-gray-900'
                   : isDarkMode
-                    ? 'bg-slate-700 text-gray-400 hover:bg-slate-600 hover:text-gray-300'
+                    ? 'bg-black text-gray-400 hover:bg-black hover:text-gray-300'
                     : 'bg-gray-200 text-gray-600 hover:bg-gray-300 hover:text-gray-800'
               }`}
               title={tab.title}>
@@ -149,7 +149,7 @@ export const BrowserTabs: React.FC<BrowserTabsProps> = ({ isDarkMode = true, onT
               <button
                 onClick={e => handleClose(e, tab.id)}
                 className={`ml-1 rounded p-0.5 transition-all duration-150 ${
-                  isDarkMode ? 'hover:bg-slate-600' : 'hover:bg-gray-300'
+                  isDarkMode ? 'hover:bg-black' : 'hover:bg-gray-300'
                 }`}
                 title="Close tab">
                 <FaTimes className="h-3 w-3" />
@@ -162,7 +162,7 @@ export const BrowserTabs: React.FC<BrowserTabsProps> = ({ isDarkMode = true, onT
       {/* Tab info bar */}
       <div
         className={`flex items-center justify-between border-t px-3 py-1 text-xs ${
-          isDarkMode ? 'border-slate-700 bg-slate-800 text-gray-400' : 'border-gray-200 bg-gray-100 text-gray-600'
+          isDarkMode ? 'border-slate-700 bg-black text-gray-400' : 'border-gray-200 bg-gray-100 text-gray-600'
         }`}>
         <span>
           {tabs.length} tab{tabs.length !== 1 ? 's' : ''} open

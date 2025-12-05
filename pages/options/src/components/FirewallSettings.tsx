@@ -56,14 +56,14 @@ export const FirewallSettings = ({ isDarkMode }: FirewallSettingsProps) => {
   return (
     <section className="space-y-6">
       <div
-        className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-blue-100 bg-gray-50'} p-6 text-left shadow-sm`}>
+        className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-black' : 'border-blue-100 bg-gray-50'} p-6 text-left shadow-sm`}>
         <h2 className={`mb-4 text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
           {t('options_firewall_header')}
         </h2>
 
         <div className="space-y-6">
           <div
-            className={`my-6 rounded-lg border p-4 ${isDarkMode ? 'border-slate-700 bg-slate-700' : 'border-gray-200 bg-gray-100'}`}>
+            className={`my-6 rounded-lg border p-4 ${isDarkMode ? 'border-slate-700 bg-black' : 'border-gray-200 bg-gray-100'}`}>
             <div className="flex items-center justify-between">
               <label
                 htmlFor="toggle-firewall"
@@ -104,7 +104,7 @@ export const FirewallSettings = ({ isDarkMode }: FirewallSettingsProps) => {
                       ? 'bg-blue-600 text-white'
                       : 'bg-blue-500 text-white'
                     : isDarkMode
-                      ? 'bg-slate-700 text-gray-200'
+                      ? 'bg-black text-gray-200'
                       : 'bg-gray-200 text-gray-700'
                 }`}>
                 {t('options_firewall_allowList_header')}
@@ -117,7 +117,7 @@ export const FirewallSettings = ({ isDarkMode }: FirewallSettingsProps) => {
                       ? 'bg-blue-600 text-white'
                       : 'bg-blue-500 text-white'
                     : isDarkMode
-                      ? 'bg-slate-700 text-gray-200'
+                      ? 'bg-black text-gray-200'
                       : 'bg-gray-200 text-gray-700'
                 }`}>
                 {t('options_firewall_denyList_header')}
@@ -138,7 +138,7 @@ export const FirewallSettings = ({ isDarkMode }: FirewallSettingsProps) => {
               }}
               placeholder={t('options_firewall_placeholders_domainUrl')}
               className={`flex-1 rounded-md border px-3 py-2 text-sm ${
-                isDarkMode ? 'border-gray-600 bg-slate-700 text-white' : 'border-gray-300 bg-white text-gray-700'
+                isDarkMode ? 'border-gray-600 bg-black text-white' : 'border-gray-300 bg-white text-gray-700'
               }`}
             />
             <Button
@@ -158,7 +158,7 @@ export const FirewallSettings = ({ isDarkMode }: FirewallSettingsProps) => {
                     <li
                       key={url}
                       className={`flex items-center justify-between rounded-md p-2 pr-0 ${
-                        isDarkMode ? 'bg-slate-700' : 'bg-gray-100'
+                        isDarkMode ? 'bg-black' : 'bg-gray-100'
                       }`}>
                       <span className={`text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{url}</span>
                       <Button
@@ -184,7 +184,7 @@ export const FirewallSettings = ({ isDarkMode }: FirewallSettingsProps) => {
                   <li
                     key={url}
                     className={`flex items-center justify-between rounded-md p-2 pr-0 ${
-                      isDarkMode ? 'bg-slate-700' : 'bg-gray-100'
+                      isDarkMode ? 'bg-black' : 'bg-gray-100'
                     }`}>
                     <span className={`text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{url}</span>
                     <Button
@@ -207,7 +207,7 @@ export const FirewallSettings = ({ isDarkMode }: FirewallSettingsProps) => {
       </div>
 
       <div
-        className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-blue-100 bg-gray-50'} p-6 text-left shadow-sm`}>
+        className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-black' : 'border-blue-100 bg-gray-50'} p-6 text-left shadow-sm`}>
         <h2 className={`mb-4 text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
           {t('options_firewall_howItWorks_header')}
         </h2>

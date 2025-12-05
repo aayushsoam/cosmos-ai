@@ -270,6 +270,139 @@ chrome.runtime.onConnect.addListener(port => {
       currentPort = null;
       currentExecutor?.cancel();
     });
+  } else if (port.name === 'summarization-ai-connection') {
+    // Handle summarization AI requests
+    port.onMessage.addListener(async message => {
+      try {
+        switch (message.type) {
+          case 'get_ai_answer': {
+            const { topic, context } = message;
+            logger.info('get_ai_answer request', topic);
+
+            try {
+              const providers = await llmProviderStore.getAllProviders();
+              if (Object.keys(providers).length === 0) {
+                return port.postMessage({
+                  type: 'ai_answer',
+                  success: false,
+                  error: 'No API keys configured',
+                });
+              }
+
+              // Get the first available provider (or use a specific one)
+              const providerKeys = Object.keys(providers);
+              const provider = providers[providerKeys[0]];
+
+              // Get agent models to find a suitable model
+              const agentModels = await agentModelStore.getAllAgentModels();
+              const thinkerModel = agentModels.thinker || agentModels.navigator;
+
+              if (!thinkerModel) {
+                return port.postMessage({
+                  type: 'ai_answer',
+                  success: false,
+                  error: 'No AI model configured',
+                });
+              }
+
+              const { createChatModel } = await import('./agent/helper');
+              const chatModel = createChatModel(provider, thinkerModel);
+
+              const prompt = context
+                ? `Based on the following context:\n\n${context}\n\nProvide a detailed answer about: ${topic}`
+                : `Provide a detailed answer about: ${topic}`;
+
+              const { HumanMessage } = await import('@langchain/core/messages');
+              const response = await chatModel.invoke([new HumanMessage(prompt)]);
+              const answer = response.content.toString();
+
+              return port.postMessage({
+                type: 'ai_answer',
+                success: true,
+                answer,
+              });
+            } catch (error) {
+              logger.error('Error getting AI answer:', error);
+              return port.postMessage({
+                type: 'ai_answer',
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error',
+              });
+            }
+          }
+
+          case 'explore_path': {
+            const { topic, prompt, context } = message;
+            logger.info('explore_path request', topic, prompt);
+
+            try {
+              const providers = await llmProviderStore.getAllProviders();
+              if (Object.keys(providers).length === 0) {
+                return port.postMessage({
+                  type: 'path_exploration',
+                  success: false,
+                  error: 'No API keys configured',
+                });
+              }
+
+              const providerKeys = Object.keys(providers);
+              const provider = providers[providerKeys[0]];
+
+              const agentModels = await agentModelStore.getAllAgentModels();
+              const thinkerModel = agentModels.thinker || agentModels.navigator;
+
+              if (!thinkerModel) {
+                return port.postMessage({
+                  type: 'path_exploration',
+                  success: false,
+                  error: 'No AI model configured',
+                });
+              }
+
+              const { createChatModel } = await import('./agent/helper');
+              const chatModel = createChatModel(provider, thinkerModel);
+
+              const fullPrompt = context
+                ? `Topic: ${topic}\nContext: ${context}\n\nUser's question/prompt: ${prompt}\n\nPlease provide a detailed answer.`
+                : `Topic: ${topic}\n\nUser's question/prompt: ${prompt}\n\nPlease provide a detailed answer.`;
+
+              const { HumanMessage } = await import('@langchain/core/messages');
+              const response = await chatModel.invoke([new HumanMessage(fullPrompt)]);
+              const answer = response.content.toString();
+
+              return port.postMessage({
+                type: 'path_exploration',
+                success: true,
+                answer,
+              });
+            } catch (error) {
+              logger.error('Error exploring path:', error);
+              return port.postMessage({
+                type: 'path_exploration',
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error',
+              });
+            }
+          }
+
+          default:
+            return port.postMessage({
+              type: 'error',
+              error: `Unknown message type: ${message.type}`,
+            });
+        }
+      } catch (error) {
+        logger.error('Error handling summarization message:', error);
+        port.postMessage({
+          type: 'error',
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    });
+
+    port.onDisconnect.addListener(() => {
+      logger.info('Summarization AI connection disconnected');
+    });
   }
 });
 

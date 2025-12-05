@@ -1,6 +1,6 @@
 /* Add this at the top of the file */
 body {
-  background-color: #000000 !important;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
   color: #e2e8f0 !important;
 }
 
@@ -37,9 +37,11 @@ code {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem;
-  background-color: #000000;
-  border-bottom: 1px solid rgba(14, 165, 233, 0.3);
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 
@@ -55,33 +57,46 @@ code {
 }
 
 .header-icon {
-  color: #19C2FF;
+  color: #8b5cf6;
   cursor: pointer;
-  transition: color 0.2s ease;
-  opacity: 0.8;
+  transition: all 0.3s ease;
+  opacity: 0.9;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background: rgba(139, 92, 246, 0.1);
 }
 
 .header-icon:hover {
-  color: #0073DC;
-  opacity: 1;
+  color: #ffffff;
+  background: rgba(139, 92, 246, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
 }
 
 .send-button {
-  color: #19C2FF;
+  color: #ffffff;
   cursor: pointer;
-  transition: color 0.2s ease;
-  opacity: 0.8;
+  transition: all 0.3s ease;
+  opacity: 0.9;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  font-weight: 600;
 }
 
 .send-button:hover {
-  color: #0073DC;
-  opacity: 1;
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.5);
 }
 
 .send-button:disabled {
-  color: #CBD5E1;
+  background: #475569;
   cursor: not-allowed;
   opacity: 0.5;
+  transform: none;
+  box-shadow: none;
 }
 
 /* Add these styles to your existing CSS */
@@ -99,12 +114,12 @@ code {
 }
 
 .scrollbar-gutter-stable::-webkit-scrollbar-thumb {
-  background: #0ea5e9;  /* sky-500 */
-  border-radius: 4px;
+  background: linear-gradient(180deg, #8b5cf6 0%, #7c3aed 100%);
+  border-radius: 8px;
 }
 
 .scrollbar-gutter-stable::-webkit-scrollbar-thumb:hover {
-  background: #38bdf8;  /* sky-400 */
+  background: #7c3aed;  /* purple-600 */
 }
 
 /* Dark mode text and background colors */
@@ -113,7 +128,7 @@ code {
 }
 
 .dark-mode-bg {
-  background-color: #000000 !important; /* black */
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
 }
 
 .dark-mode-border {

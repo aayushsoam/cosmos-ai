@@ -98,7 +98,7 @@ Modal When "Done" Clicked:
 ```
 
 ### Color Scheme (Dark Mode - Default)
-- **Background**: `bg-slate-900` (main), `bg-slate-800` (secondary)
+- **Background**: `bg-black` (main), `bg-black` (secondary)
 - **Text**: `text-white` (primary), `text-gray-300` (secondary)
 - **Borders**: `border-slate-700`
 - **Status Colors**:

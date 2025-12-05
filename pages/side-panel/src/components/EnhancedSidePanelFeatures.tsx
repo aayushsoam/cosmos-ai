@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { FiGlobe, FaTimes } from 'react-icons/fi';
-import { FaBrain, FaRobot, FaGears } from 'react-icons/fa';
+import { FiGlobe } from 'react-icons/fi';
+import { FaTimes, FaBrain, FaRobot, FaCog } from 'react-icons/fa';
 
 // Browser tab interface
 export interface BrowserTabItem {
@@ -49,13 +49,13 @@ export const BrowserTabsDisplay: React.FC<{ isDarkMode?: boolean }> = ({ isDarkM
   return (
     <div
       className={`border-b flex overflow-x-auto gap-1 p-2 ${
-        isDarkMode ? 'border-slate-700 bg-slate-900' : 'border-gray-200 bg-gray-50'
+        isDarkMode ? 'border-slate-700 bg-black' : 'border-gray-200 bg-gray-50'
       }`}>
       {tabs.map(tab => (
         <div
           key={tab.id}
           className={`flex items-center gap-1 px-2 py-1 rounded text-xs shrink-0 ${
-            isDarkMode ? 'bg-slate-800 text-gray-300' : 'bg-gray-200 text-gray-700'
+            isDarkMode ? 'bg-black text-gray-300' : 'bg-gray-200 text-gray-700'
           }`}
           title={tab.title}>
           {tab.favicon ? <img src={tab.favicon} alt="" className="h-3 w-3 rounded" /> : <FiGlobe className="h-3 w-3" />}
@@ -115,7 +115,7 @@ export const AgentStatusDisplay: React.FC<AgentStatusProps> = ({ agents, isDarkM
       case 'navigation':
         return <FaRobot className="h-4 w-4 text-blue-400" />;
       case 'system':
-        return <FaGears className="h-4 w-4 text-green-400" />;
+        return <FaCog className="h-4 w-4 text-green-400" />;
     }
   };
 
@@ -148,7 +148,7 @@ export const AgentStatusDisplay: React.FC<AgentStatusProps> = ({ agents, isDarkM
   return (
     <div
       className={`text-xs space-y-1 px-3 py-2 ${
-        isDarkMode ? 'bg-slate-800 border-b border-slate-700' : 'bg-gray-100 border-b border-gray-200'
+        isDarkMode ? 'bg-black border-b border-slate-700' : 'bg-gray-100 border-b border-gray-200'
       }`}>
       {agents.map(agent => (
         <div key={agent.type} className="flex items-center gap-2">
@@ -200,16 +200,14 @@ export const SummarizeModal: React.FC<SummarizeModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2">
       <div
         className={`rounded-lg shadow-xl max-h-[80vh] w-full max-w-md overflow-auto ${
-          isDarkMode ? 'bg-slate-900' : 'bg-white'
+          isDarkMode ? 'bg-black' : 'bg-white'
         }`}>
         <div
           className={`flex items-center justify-between border-b p-3 ${
-            isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-gray-100'
+            isDarkMode ? 'border-slate-700 bg-black' : 'border-gray-200 bg-gray-100'
           }`}>
           <h2 className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Content Summary</h2>
-          <button
-            onClick={onClose}
-            className={`p-1 rounded ${isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}>
+          <button onClick={onClose} className={`p-1 rounded ${isDarkMode ? 'hover:bg-black' : 'hover:bg-gray-200'}`}>
             <FaTimes className="h-4 w-4" />
           </button>
         </div>
@@ -222,10 +220,10 @@ export const SummarizeModal: React.FC<SummarizeModalProps> = ({
               className={`cursor-pointer rounded border-2 p-2 transition-all ${
                 selected === summary.url
                   ? isDarkMode
-                    ? 'border-blue-500 bg-slate-800'
+                    ? 'border-blue-500 bg-black'
                     : 'border-blue-400 bg-blue-50'
                   : isDarkMode
-                    ? 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                    ? 'border-slate-700 bg-black/50 hover:border-slate-600'
                     : 'border-gray-300 bg-gray-50'
               }`}>
               <div className="flex items-start gap-2">
@@ -246,12 +244,12 @@ export const SummarizeModal: React.FC<SummarizeModalProps> = ({
 
         <div
           className={`flex gap-2 border-t p-3 ${
-            isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-gray-100'
+            isDarkMode ? 'border-slate-700 bg-black' : 'border-gray-200 bg-gray-100'
           }`}>
           <button
             onClick={onClose}
             className={`flex-1 rounded px-2 py-1 text-xs font-medium ${
-              isDarkMode ? 'bg-slate-700 text-gray-200 hover:bg-slate-600' : 'bg-gray-300 text-gray-800'
+              isDarkMode ? 'bg-black text-gray-200 hover:bg-black' : 'bg-gray-300 text-gray-800'
             }`}>
             Cancel
           </button>
