@@ -20,9 +20,11 @@ class ChatLlama extends ChatOpenAI {
   }
 
   // Override the completionWithRetry method to intercept and transform the response
+  // @ts-ignore
   async completionWithRetry(request: any, options?: any): Promise<any> {
     try {
       // Make the request using the parent's implementation
+      // @ts-ignore
       const response = await super.completionWithRetry(request, options);
 
       // Check if this is a Llama API response format
@@ -328,15 +330,18 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
         model: modelConfig.modelName,
         // required but ignored by ollama
         apiKey: providerConfig.apiKey === '' ? 'ollama' : providerConfig.apiKey,
-        baseUrl: providerConfig.baseUrl ?? 'http://localhost:11434',
+        baseUrl: (providerConfig.baseUrl ?? 'http://localhost:11434')
+          .replace(/\/$/, '')
+          .replace(/\/api\/chat$/, '')
+          .replace(/\/api\/generate$/, ''),
         topP,
         temperature,
         maxTokens,
         // ollama usually has a very small context window, so we need to set a large number for agent to work
         // It was set to 128000 in the original code, but it will cause ollama reload the models frequently if you have multiple models working together
-        // not sure why, but setting it to 64000 seems to work fine
+        // numCtx set to 4096 to prevent OOM on standard GPUs.
         // TODO: configure the context window size in model config
-        numCtx: 64000,
+        numCtx: 4096,
       };
       return new ChatOllama(args);
     }
@@ -374,6 +379,9 @@ export function createChatModel(providerConfig: ProviderConfig, modelConfig: Mod
       args.configuration = configuration;
 
       return new ChatLlama(args);
+    }
+    case ProviderTypeEnum.NVIDIA: {
+      return createOpenAIChatModel(providerConfig, modelConfig, undefined);
     }
     default: {
       // by default, we think it's a openai-compatible provider

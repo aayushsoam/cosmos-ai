@@ -101,18 +101,50 @@ chrome.runtime.onConnect.addListener(port => {
 
             logger.info('new_task', message.tabId, message.task);
 
-            // Cleanup previous executor if exists
-            if (currentExecutor) {
-              logger.info('Cleaning up previous executor before starting new task');
-              await currentExecutor.cleanup();
-              currentExecutor = null;
+            try {
+              // Cleanup previous executor if exists
+              if (currentExecutor) {
+                logger.info('Cleaning up previous executor before starting new task');
+                await currentExecutor.cleanup();
+                currentExecutor = null;
+              }
+
+              logger.info('Setting up executor for task:', message.task.substring(0, 100));
+              currentExecutor = await setupExecutor(message.taskId, message.task, browserContext);
+              logger.info('Executor setup completed, subscribing to events');
+              subscribeToExecutorEvents(currentExecutor);
+
+              logger.info('Starting task execution...');
+              const result = await currentExecutor.execute();
+              logger.info('new_task execution result', message.tabId, result);
+            } catch (error) {
+              logger.error('new_task execution failed:', error);
+              const errorMessage = error instanceof Error ? error.message : String(error);
+              logger.error('Error details:', {
+                message: errorMessage,
+                stack: error instanceof Error ? error.stack : undefined,
+              });
+
+              // Send error to UI
+              try {
+                port.postMessage({
+                  type: 'error',
+                  error: errorMessage,
+                });
+              } catch (sendError) {
+                logger.error('Failed to send error message to UI:', sendError);
+              }
+
+              // Cleanup executor if it was created
+              if (currentExecutor) {
+                try {
+                  await currentExecutor.cleanup();
+                } catch (cleanupError) {
+                  logger.error('Failed to cleanup executor after error:', cleanupError);
+                }
+                currentExecutor = null;
+              }
             }
-
-            currentExecutor = await setupExecutor(message.taskId, message.task, browserContext);
-            subscribeToExecutorEvents(currentExecutor);
-
-            const result = await currentExecutor.execute();
-            logger.info('new_task execution result', message.tabId, result);
             break;
           }
 
@@ -289,10 +321,6 @@ chrome.runtime.onConnect.addListener(port => {
                 });
               }
 
-              // Get the first available provider (or use a specific one)
-              const providerKeys = Object.keys(providers);
-              const provider = providers[providerKeys[0]];
-
               // Get agent models to find a suitable model
               const agentModels = await agentModelStore.getAllAgentModels();
               const thinkerModel = agentModels.thinker || agentModels.navigator;
@@ -302,6 +330,16 @@ chrome.runtime.onConnect.addListener(port => {
                   type: 'ai_answer',
                   success: false,
                   error: 'No AI model configured',
+                });
+              }
+
+              // Get the correct provider config for the selected model
+              const provider = providers[thinkerModel.provider];
+              if (!provider) {
+                return port.postMessage({
+                  type: 'ai_answer',
+                  success: false,
+                  error: `Provider ${thinkerModel.provider} not configured`,
                 });
               }
 
@@ -345,9 +383,6 @@ chrome.runtime.onConnect.addListener(port => {
                 });
               }
 
-              const providerKeys = Object.keys(providers);
-              const provider = providers[providerKeys[0]];
-
               const agentModels = await agentModelStore.getAllAgentModels();
               const thinkerModel = agentModels.thinker || agentModels.navigator;
 
@@ -356,6 +391,15 @@ chrome.runtime.onConnect.addListener(port => {
                   type: 'path_exploration',
                   success: false,
                   error: 'No AI model configured',
+                });
+              }
+
+              const provider = providers[thinkerModel.provider];
+              if (!provider) {
+                return port.postMessage({
+                  type: 'path_exploration',
+                  success: false,
+                  error: `Provider ${thinkerModel.provider} not configured`,
                 });
               }
 
@@ -379,6 +423,117 @@ chrome.runtime.onConnect.addListener(port => {
               logger.error('Error exploring path:', error);
               return port.postMessage({
                 type: 'path_exploration',
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error',
+              });
+            }
+          }
+
+          case 'generate_document': {
+            const { kind, content, task } = message as {
+              kind: 'summary' | 'research' | 'research_paper' | 'latex' | 'map';
+              content: string;
+              task?: string;
+            };
+
+            try {
+              const providers = await llmProviderStore.getAllProviders();
+              if (Object.keys(providers).length === 0) {
+                return port.postMessage({
+                  type: 'generated_document',
+                  success: false,
+                  error: 'No API keys configured',
+                });
+              }
+
+              const agentModels = await agentModelStore.getAllAgentModels();
+              const thinkerModel = agentModels.thinker || agentModels.navigator;
+              if (!thinkerModel) {
+                return port.postMessage({
+                  type: 'generated_document',
+                  success: false,
+                  error: 'No AI model configured',
+                });
+              }
+
+              const provider = providers[thinkerModel.provider];
+              if (!provider) {
+                return port.postMessage({
+                  type: 'generated_document',
+                  success: false,
+                  error: `Provider ${thinkerModel.provider} not configured`,
+                });
+              }
+
+              const { createChatModel } = await import('./agent/helper');
+              const chatModel = createChatModel(provider, thinkerModel);
+              const { HumanMessage } = await import('@langchain/core/messages');
+
+              const header = task ? `User request: ${task}\n\n` : '';
+              let instruction = '';
+              if (kind === 'summary') {
+                instruction =
+                  'Write a clear, structured summary. Include key points and a short conclusion. Use plain text.';
+              } else if (kind === 'research') {
+                instruction =
+                  'Do a brief research-style writeup: define the topic, explain important concepts, compare viewpoints, and list further reading suggestions. Use plain text.';
+              } else if (kind === 'research_paper') {
+                instruction =
+                  'Write a mini research paper with sections: Abstract, Introduction, Related Work (if applicable), Method/Approach, Findings/Discussion, Conclusion, and References (as placeholders if you do not have citations). Use plain text.';
+              } else if (kind === 'latex') {
+                instruction =
+                  'Convert the content into a complete LaTeX article document. Output ONLY valid LaTeX source (no markdown).';
+              } else if (kind === 'map') {
+                instruction = `You are an expert knowledge organizer. Analyze the content deeply and create a comprehensive, multi-level hierarchical mind map.
+
+RULES:
+1. Return ONLY a valid JSON object — no markdown, no code blocks, no extra text.
+2. The root node must have id "root".
+3. Create AT LEAST 4-6 main branches (level 1 children of root).
+4. Each main branch should have 2-4 sub-branches (level 2).
+5. Important sub-branches should have 1-3 detail nodes (level 3).
+6. Every node MUST have: "id" (unique string like "1", "1.1", "1.1.1"), "label" (short title, max 5 words), "content" (1-2 sentence explanation).
+7. "children" array is optional — omit it for leaf nodes.
+8. Make labels concise but descriptive. Make content informative and specific.
+9. Organize logically: group related concepts together.
+10. Cover ALL key topics from the content — don't skip important ideas.
+
+JSON STRUCTURE:
+{
+  "id": "root",
+  "label": "Main Topic",
+  "content": "Overview description",
+  "children": [
+    {
+      "id": "1",
+      "label": "Key Area 1",
+      "content": "Detailed explanation",
+      "children": [
+        { "id": "1.1", "label": "Sub-concept", "content": "Specific details" },
+        { "id": "1.2", "label": "Sub-concept 2", "content": "More details", "children": [
+          { "id": "1.2.1", "label": "Detail", "content": "Granular info" }
+        ]}
+      ]
+    }
+  ]
+}
+
+Output pure JSON only. No wrapping. No explanation before or after.`;
+              }
+
+              const prompt = `${header}Content to transform:\n\n${content}\n\nInstruction:\n${instruction}`.trim();
+              const response = await chatModel.invoke([new HumanMessage(prompt)]);
+              const text = response.content.toString();
+
+              return port.postMessage({
+                type: 'generated_document',
+                success: true,
+                text,
+              });
+            } catch (error) {
+              logger.error('Error generating document:', error);
+              return port.postMessage({
+                type: 'generated_document',
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
               });
@@ -467,7 +622,7 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
       maxFailures: generalSettings.maxFailures,
       maxActionsPerStep: generalSettings.maxActionsPerStep,
       useVision: generalSettings.useVision,
-      useVisionForthinker: true,
+      useVisionForthinker: generalSettings.useVision, // Only use vision for thinker if vision is enabled (saves credits)
       planningInterval: generalSettings.planningInterval,
     },
     generalSettings: generalSettings,

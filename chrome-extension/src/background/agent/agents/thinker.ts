@@ -59,22 +59,28 @@ export class thinkerAgent extends BaseAgent<typeof thinkerOutputSchema, thinkerO
       const thinkerMessages = [this.prompt.getSystemMessage(), ...messages.slice(1)];
 
       // Remove images from last message if vision is not enabled for thinker but vision is enabled
+      // Optimized: Only process if actually needed
       if (!this.context.options.useVisionForthinker && this.context.options.useVision) {
         const lastStateMessage = thinkerMessages[thinkerMessages.length - 1];
-        let newMsg = '';
+        // Check if message actually contains images before processing
+        const hasImages =
+          Array.isArray(lastStateMessage.content) &&
+          lastStateMessage.content.some((msg: any) => msg.type === 'image_url');
 
-        if (Array.isArray(lastStateMessage.content)) {
-          for (const msg of lastStateMessage.content) {
-            if (msg.type === 'text') {
-              newMsg += msg.text;
+        if (hasImages) {
+          let newMsg = '';
+          if (Array.isArray(lastStateMessage.content)) {
+            for (const msg of lastStateMessage.content) {
+              if (msg.type === 'text') {
+                newMsg += msg.text;
+              }
+              // Skip image_url messages
             }
-            // Skip image_url messages
+          } else {
+            newMsg = lastStateMessage.content;
           }
-        } else {
-          newMsg = lastStateMessage.content;
+          thinkerMessages[thinkerMessages.length - 1] = new HumanMessage(newMsg);
         }
-
-        thinkerMessages[thinkerMessages.length - 1] = new HumanMessage(newMsg);
       }
 
       const modelOutput = await this.invoke(thinkerMessages);

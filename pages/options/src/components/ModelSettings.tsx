@@ -420,8 +420,8 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
     } else if (providerType === ProviderTypeEnum.OpenRouter) {
       // OpenRouter needs API Key and optionally Base URL (has default)
       hasInput = Boolean(config?.apiKey?.trim()) && Boolean(config?.baseUrl?.trim());
-    } else if (providerType === ProviderTypeEnum.Llama) {
-      // Llama needs API Key and Base URL
+    } else if (providerType === ProviderTypeEnum.Llama || providerType === ProviderTypeEnum.NVIDIA) {
+      // Llama and NVIDIA need API Key and Base URL
       hasInput = Boolean(config?.apiKey?.trim()) && Boolean(config?.baseUrl?.trim());
     } else {
       // Other built-in providers just need API Key
@@ -454,7 +454,8 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
           providers[provider].type === ProviderTypeEnum.Ollama ||
           providers[provider].type === ProviderTypeEnum.AzureOpenAI ||
           providers[provider].type === ProviderTypeEnum.OpenRouter ||
-          providers[provider].type === ProviderTypeEnum.Llama) &&
+          providers[provider].type === ProviderTypeEnum.Llama ||
+          providers[provider].type === ProviderTypeEnum.NVIDIA) &&
         (!providers[provider].baseUrl || !providers[provider].baseUrl.trim())
       ) {
         alert(t('options_models_providers_errors_baseUrlRequired', getDefaultDisplayNameFromProviderId(provider)));
@@ -1357,7 +1358,8 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                       providerConfig.type === ProviderTypeEnum.Ollama ||
                       providerConfig.type === ProviderTypeEnum.AzureOpenAI ||
                       providerConfig.type === ProviderTypeEnum.OpenRouter ||
-                      providerConfig.type === ProviderTypeEnum.Llama) && (
+                      providerConfig.type === ProviderTypeEnum.Llama ||
+                      providerConfig.type === ProviderTypeEnum.NVIDIA) && (
                       <div className="flex flex-col">
                         <div className="flex items-center">
                           <label
@@ -1386,7 +1388,9 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
                                     ? t('options_models_providers_placeholders_baseUrl_openrouter')
                                     : providerConfig.type === ProviderTypeEnum.Llama
                                       ? t('options_models_providers_placeholders_baseUrl_llama')
-                                      : t('options_models_providers_placeholders_baseUrl_ollama')
+                                      : providerConfig.type === ProviderTypeEnum.NVIDIA
+                                        ? 'https://integrate.api.nvidia.com/v1'
+                                        : t('options_models_providers_placeholders_baseUrl_ollama')
                             }
                             value={providerConfig.baseUrl || ''}
                             onChange={e => handleApiKeyChange(providerId, providerConfig.apiKey || '', e.target.value)}

@@ -387,4 +387,4 @@ All components follow Cosmos design patterns, support dark mode, and are fully d
 
 **Created**: November 11, 2025  
 **Version**: 1.0  
-**Project**: Cosmos (nanobrowser) v0.1.12
+**Project**: Cosmos v0.1.12

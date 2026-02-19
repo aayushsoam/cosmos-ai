@@ -6,6 +6,8 @@ interface HeaderProps {
   onNewChat?: () => void;
   onLoadHistory?: () => void;
   onOpenSettings?: () => void;
+  onOpenSummarization?: () => void;
+  onOpenLinkedIn?: () => void;
   showHistory?: boolean;
   onBackToChat?: () => void;
 }
@@ -16,6 +18,8 @@ const EclipseHeader: React.FC<HeaderProps> = ({
   onNewChat,
   onLoadHistory,
   onOpenSettings,
+  onOpenSummarization,
+  onOpenLinkedIn,
   showHistory = false,
   onBackToChat,
 }) => {
@@ -112,6 +116,23 @@ const EclipseHeader: React.FC<HeaderProps> = ({
                 </button>
               </>
             )}
+            <button
+              className="menu-option"
+              onClick={() => {
+                onOpenSummarization?.();
+                setShowMenu(false);
+              }}>
+              Summarization
+            </button>
+            <button
+              className="menu-option"
+              onClick={() => {
+                onOpenLinkedIn?.();
+                setShowMenu(false);
+              }}>
+              🔗 LinkedIn Auto Apply
+            </button>
+
             <button
               className="menu-option"
               onClick={() => {

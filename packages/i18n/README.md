@@ -68,7 +68,7 @@ locales
 Then run the following command. (or just run `pnpm dev` or `pnpm build` on root)
 
 ```bash
-pnpm genenrate-i8n
+pnpm generate-i18n
 ```
 
 ### Add a new language
@@ -88,7 +88,7 @@ locales
 Then same as above, run the following command. (or just run `pnpm dev` or `pnpm build` on root)
 
 ```bash
-pnpm genenrate-i8n
+pnpm generate-i18n
 ```
 
 

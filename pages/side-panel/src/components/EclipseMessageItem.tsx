@@ -78,18 +78,6 @@ const EclipseMessageItem: React.FC<MessageItemProps> = ({
     <div className={messageClasses} onClick={message.type === 'user' ? handleClick : undefined} style={messageStyle}>
       {message.type === 'user' ? (
         <div className="user-message-content">
-          {/* Display tabs if available */}
-          {message.tabs && message.tabs.length > 0 && <TabDisplay tabs={message.tabs} />}
-
-          {/* Display links if available */}
-          {message.links && message.links.length > 0 && (
-            <div>
-              {message.links.map((link, index) => (
-                <LinkDisplay key={index} url={link} />
-              ))}
-            </div>
-          )}
-
           {isEditing ? (
             <div className="edit-mode">
               <span
@@ -105,6 +93,18 @@ const EclipseMessageItem: React.FC<MessageItemProps> = ({
             </div>
           ) : (
             <span className="user-text">{message.content}</span>
+          )}
+
+          {/* Display tabs usage if available */}
+          {message.tabs && message.tabs.length > 0 && <TabDisplay tabs={message.tabs} />}
+
+          {/* Display links if available */}
+          {message.links && message.links.length > 0 && (
+            <div>
+              {message.links.map((link, index) => (
+                <LinkDisplay key={index} url={link} />
+              ))}
+            </div>
           )}
         </div>
       ) : (

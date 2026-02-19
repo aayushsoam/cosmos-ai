@@ -1,5 +1,5 @@
 import { ProviderTypeEnum } from '@extension/storage';
-import { SiOpenai, SiAmazon } from 'react-icons/si';
+import { SiOpenai, SiAmazon, SiNvidia } from 'react-icons/si';
 import { FaRobot, FaGooglePlay, FaTerminal } from 'react-icons/fa';
 import { FiGlobe, FiServer } from 'react-icons/fi';
 import type { FC } from 'react';
@@ -81,6 +81,13 @@ const PROVIDER_OPTIONS: Record<string, ProviderOption> = {
     name: 'Llama',
     icon: FaRobot,
     color: 'text-white',
+    bgColor: 'bg-black text-white border border-gray-700',
+  },
+  [ProviderTypeEnum.NVIDIA]: {
+    id: ProviderTypeEnum.NVIDIA,
+    name: 'NVIDIA',
+    icon: SiNvidia,
+    color: 'text-green-500',
     bgColor: 'bg-black text-white border border-gray-700',
   },
 };

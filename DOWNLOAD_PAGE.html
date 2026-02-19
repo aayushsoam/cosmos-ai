@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cosmos AI - Download Extension</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      width: 100%;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 40px;
+    }
+
+    .download-section {
+      text-align: center;
+      margin-bottom: 50px;
+      padding: 30px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .download-section h2 {
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .btn-download {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 16px 40px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .btn-download:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-download:active {
+      transform: translateY(0);
+    }
+
+    .steps-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .step {
+      padding: 20px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .step:hover {
+      border-color: #667eea;
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.1);
+    }
+
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 50%;
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+    }
+
+    .step h3 {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .step p {
+      color: #666;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .code-block {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      margin: 10px 0;
+      overflow-x: auto;
+    }
+
+    .faq-section {
+      margin-top: 40px;
+      padding-top: 40px;
+      border-top: 2px solid #e0e0e0;
+    }
+
+    .faq-section h2 {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .faq-item {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .faq-item h4 {
+      color: #667eea;
+      margin-bottom: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .faq-item p {
+      color: #666;
+      line-height: 1.6;
+      display: none;
+    }
+
+    .faq-item.active p {
+      display: block;
+    }
+
+    .toggle-icon {
+      transition: transform 0.3s;
+    }
+
+    .faq-item.active .toggle-icon {
+      transform: rotate(180deg);
+    }
+
+    .footer {
+      background: #f8f9fa;
+      padding: 20px;
+      text-align: center;
+      color: #666;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .feature-list {
+      list-style: none;
+      margin: 15px 0;
+    }
+
+    .feature-list li {
+      padding: 8px 0;
+      color: #666;
+      display: flex;
+      align-items: center;
+    }
+
+    .feature-list li:before {
+      content: "✓";
+      color: #667eea;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 1.8rem;
+      }
+
+      .content {
+        padding: 20px;
+      }
+
+      .steps-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚀 Cosmos AI Extension</h1>
+      <p>Download and Install in 2 Minutes</p>
+    </div>
+
+    <div class="content">
+      <!-- Download Section -->
+      <div class="download-section">
+        <h2>Get Started Now</h2>
+        <a href="#" class="btn-download" onclick="downloadExtension(); return false;">
+          📥 Download Extension ZIP
+        </a>
+        <p style="margin-top: 15px; color: #666; font-size: 0.9rem;">
+          Latest Version • Production Ready • No Installation Required
+        </p>
+      </div>
+
+      <!-- Installation Steps -->
+      <div class="steps-container">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Download</h3>
+          <p>Click the download button above to get the extension ZIP file to your computer.</p>
+        </div>
+
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>Extract</h3>
+          <p>Right-click the ZIP and extract it to a folder you can remember.</p>
+        </div>
+
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>Load in Chrome</h3>
+          <p>Visit <code class="code-block" style="display: inline; padding: 3px 6px; margin: 0;">chrome://extensions/</code> and click "Load unpacked"</p>
+        </div>
+
+        <div class="step">
+          <div class="step-number">4</div>
+          <h3>Use & Enjoy</h3>
+          <p>Click the extension icon and configure your API keys to start automating!</p>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div style="background: #f8f9fa; padding: 30px; border-radius: 8px; margin-bottom: 40px;">
+        <h2 style="margin-bottom: 20px; color: #333;">Why Cosmos AI?</h2>
+        <ul class="feature-list">
+          <li>🤖 AI-powered web automation</li>
+          <li>⚡ Fast and reliable</li>
+          <li>🔒 Privacy-focused (runs locally)</li>
+          <li>🎯 Easy to configure</li>
+          <li>📚 Comprehensive documentation</li>
+          <li>🔄 Regular updates</li>
+        </ul>
+      </div>
+
+      <!-- FAQ Section -->
+      <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+
+        <div class="faq-item">
+          <h4 onclick="toggleFaq(this)">
+            ❓ Is it safe to download?
+            <span class="toggle-icon">▼</span>
+          </h4>
+          <p>Yes! The extension is open-source and you can verify the code on GitHub. It runs entirely in your browser and doesn't require admin permissions.</p>
+        </div>
+
+        <div class="faq-item">
+          <h4 onclick="toggleFaq(this)">
+            ❓ Do I need to install it every time?
+            <span class="toggle-icon">▼</span>
+          </h4>
+          <p>No! Once installed, it stays in Chrome. Future updates can be downloaded and loaded the same way, or enable auto-updates in Chrome settings.</p>
+        </div>
+
+        <div class="faq-item">
+          <h4 onclick="toggleFaq(this)">
+            ❓ What if I get a security warning?
+            <span class="toggle-icon">▼</span>
+          </h4>
+          <p>Chrome shows a warning for any unpacked extension. This is normal and safe. If you're uncomfortable, you can inspect the source code on our GitHub repository.</p>
+        </div>
+
+        <div class="faq-item">
+          <h4 onclick="toggleFaq(this)">
+            ❓ Can I share this with others?
+            <span class="toggle-icon">▼</span>
+          </h4>
+          <p>Absolutely! Share the ZIP file or this download page link with anyone who wants to use Cosmos AI.</p>
+        </div>
+
+        <div class="faq-item">
+          <h4 onclick="toggleFaq(this)">
+            ❓ How do I uninstall?
+            <span class="toggle-icon">▼</span>
+          </h4>
+          <p>Go to <code class="code-block" style="display: inline; padding: 3px 6px; margin: 0;">chrome://extensions/</code>, find Cosmos AI, and click the Remove button.</p>
+        </div>
+
+        <div class="faq-item">
+          <h4 onclick="toggleFaq(this)">
+            ❓ Need help with installation?
+            <span class="toggle-icon">▼</span>
+          </h4>
+          <p>Check our detailed <a href="./EXTENSION_INSTALLATION_GUIDE.md" style="color: #667eea; text-decoration: none;">Installation Guide</a> or open an issue on <a href="https://github.com/aayushsoam/cosmos-ai/issues" style="color: #667eea; text-decoration: none;">GitHub</a>.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Cosmos AI © 2025 • <a href="https://github.com/aayushsoam/cosmos-ai" style="color: #667eea; text-decoration: none;">GitHub Repository</a></p>
+    </div>
+  </div>
+
+  <script>
+    function downloadExtension() {
+      // Replace with your actual download link
+      // Option 1: GitHub Releases
+      const downloadUrl = 'https://github.com/aayushsoam/cosmos-ai/releases/download/latest/cosmos-ai-extension.zip';
+      
+      // Option 2: Direct from your server (update this path)
+      // const downloadUrl = '/releases/cosmos-ai-extension.zip';
+      
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = true;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function toggleFaq(element) {
+      element.parentElement.classList.toggle('active');
+    }
+  </script>
+</body>
+</html>

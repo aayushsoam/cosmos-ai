@@ -3,15 +3,17 @@ import '@src/Options.css';
 import { Button } from '@extension/ui';
 import { withErrorBoundary, withSuspense } from '@extension/shared';
 import { t } from '@extension/i18n';
-import { FiSettings, FiCpu, FiHelpCircle } from 'react-icons/fi';
+import { FiSettings, FiCpu, FiHelpCircle, FiLink } from 'react-icons/fi';
 import { GeneralSettings } from './components/GeneralSettings';
 import { ModelSettings } from './components/ModelSettings';
+import { MCPSettings } from './components/MCPSettings';
 
-type TabTypes = 'general' | 'models' | 'help';
+type TabTypes = 'general' | 'models' | 'mcp' | 'help';
 
 const TABS: { id: TabTypes; icon: React.ComponentType<{ className?: string }>; label: string }[] = [
   { id: 'general', icon: FiSettings, label: t('options_tabs_general') },
   { id: 'models', icon: FiCpu, label: t('options_tabs_models') },
+  { id: 'mcp', icon: FiLink, label: 'MCP' },
   { id: 'help', icon: FiHelpCircle, label: t('options_tabs_help') },
 ];
 
@@ -35,6 +37,8 @@ const Options = () => {
         return <GeneralSettings isDarkMode={isDarkMode} />;
       case 'models':
         return <ModelSettings isDarkMode={isDarkMode} />;
+      case 'mcp':
+        return <MCPSettings isDarkMode={isDarkMode} />;
       default:
         return null;
     }

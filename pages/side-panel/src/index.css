@@ -1,5 +1,10 @@
 /* Import Eclipse UI Styles */
 @import './styles/eclipse-ui.css';
+@import 'katex/dist/katex.min.css';
+@import './styles/code-rainbow.css';
+
+/* Highlight.js Theme (Atom One Dark) */
+@import 'highlight.js/styles/atom-one-dark.css';
 
 @tailwind base;
 @tailwind components;

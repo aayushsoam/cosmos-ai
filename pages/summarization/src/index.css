@@ -1,3 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* NotebookLM-inspired Color Palette */
+  --background-primary: #000000;
+  --background-secondary: #0a0a0a;
+  --background-tertiary: #141414;
+  --surface-dark: #1a1a1a;
+  --surface-medium: #202020;
+  --surface-light: #2a2a2a;
+
+  /* Accent Colors */
+  --accent-primary: #4285f4;
+  --accent-primary-hover: #5a95f5;
+  --accent-secondary: #8ab4f8;
+  --accent-purple: #a374f9;
+  --accent-green: #34a853;
+
+  /* Text Colors */
+  --text-primary: #e8eaed;
+  --text-secondary: #9aa0a6;
+  --text-tertiary: #5f6368;
+  --text-inverse: #202124;
+
+  /* Border Colors */
+  --border-subtle: #292a2d;
+  --border-medium: #3c4043;
+  --border-strong: #5f6368;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #4285f4 0%, #a374f9 100%);
+  --gradient-accent: linear-gradient(135deg, rgba(66, 133, 244, 0.1) 0%, rgba(163, 116, 249, 0.1) 100%);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(66, 133, 244, 0.3);
+
+  /* Animation */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -5,14 +50,15 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #000000;
-  color: #ffffff;
+  background: var(--background-primary);
+  color: var(--text-primary);
   overflow: hidden;
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 #app-container {
@@ -20,3 +66,58 @@ body {
   height: 100vh;
 }
 
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-medium);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--surface-light);
+}
+
+/* Smooth animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}

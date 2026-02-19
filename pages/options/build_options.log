@@ -1,0 +1,31 @@
+
+> @extension/options@0.1.12 build C:\Users\thaku\OneDrive\Desktop\my project\1\cosmos-ai\pages\options
+> vite build
+
+[36mvite v6.3.6 [32mbuilding for production...[36m[39m
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+transforming...
+[32mΓ£ô[39m 82 modules transformed.
+Γ£ù Build failed in 2.99s
+error during build:
+src/components/MCPSettings.tsx (11:4): "SiTwitter" is not exported by "../../node_modules/.pnpm/react-icons@5.5.0_react@18.3.1/node_modules/react-icons/si/index.mjs", imported by "src/components/MCPSettings.tsx".
+file: C:/Users/thaku/OneDrive/Desktop/my project/1/cosmos-ai/pages/options/src/components/MCPSettings.tsx:11:4
+
+ 9:     SiSlack,
+10:     SiNotion,
+11:     SiTwitter,
+        ^
+12:     SiGooglecalendar,
+13:     SiGoogledrive,
+
+    at getRollupError (file:///C:/Users/thaku/OneDrive/Desktop/my%20project/1/cosmos-ai/node_modules/.pnpm/rollup@4.52.4/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///C:/Users/thaku/OneDrive/Desktop/my%20project/1/cosmos-ai/node_modules/.pnpm/rollup@4.52.4/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at Module.error (file:///C:/Users/thaku/OneDrive/Desktop/my%20project/1/cosmos-ai/node_modules/.pnpm/rollup@4.52.4/node_modules/rollup/dist/es/shared/node-entry.js:16939:16)
+    at Module.traceVariable (file:///C:/Users/thaku/OneDrive/Desktop/my%20project/1/cosmos-ai/node_modules/.pnpm/rollup@4.52.4/node_modules/rollup/dist/es/shared/node-entry.js:17391:29)
+    at ModuleScope.findVariable (file:///C:/Users/thaku/OneDrive/Desktop/my%20project/1/cosmos-ai/node_modules/.pnpm/rollup@4.52.4/node_modules/rollup/dist/es/shared/node-entry.js:15061:39)
+    at Identifier.bind (file:///C:/Users/thaku/OneDrive/Desktop/my%20project/1/cosmos-ai/node_modules/.pnpm/rollup@4.52.4/node_modules/rollup/dist/es/shared/node-entry.js:5413:40)
+    at Property.bind (file:///C:/Users/thaku/OneDrive/Desktop/my%20project/1/cosmos-ai/node_modules/.pnpm/rollup@4.52.4/node_modules/rollup/dist/es/shared/node-entry.js:2804:23)
+    at ObjectExpression.bind (file:///C:/Users/thaku/OneDrive/Desktop/my%20project/1/cosmos-ai/node_modules/.pnpm/rollup@4.52.4/node_modules/rollup/dist/es/shared/node-entry.js:2800:28)
+    at Property.bind (file:///C:/Users/thaku/OneDrive/Desktop/my%20project/1/cosmos-ai/node_modules/.pnpm/rollup@4.52.4/node_modules/rollup/dist/es/shared/node-entry.js:2804:23)
+    at ObjectExpression.bind (file:///C:/Users/thaku/OneDrive/Desktop/my%20project/1/cosmos-ai/node_modules/.pnpm/rollup@4.52.4/node_modules/rollup/dist/es/shared/node-entry.js:2800:28)
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.

@@ -5,12 +5,18 @@ import favoritesStorage, { type FavoritePrompt } from '@extension/storage/lib/pr
 import { t } from '@extension/i18n';
 import ChatHistoryList from './components/ChatHistoryList';
 import TabSelectorModal from './components/TabSelectorModal';
+import { MCPConnection } from '@extension/storage/lib/types/mcp';
+
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
 import './styles/eclipse-ui.css';
 import EclipseHeader from './components/EclipseHeader';
 import EclipseContent from './components/EclipseContent';
 import EclipseFooter from './components/EclipseFooter';
+import EmailComposeCard from './components/EmailComposeCard';
+import { type EmailData } from './components/EmailComposeModal';
+import mcpSettingsStore from '@extension/storage/lib/settings/mcpSettings';
+import LinkedInAutoApply from './components/LinkedInAutoApply';
 
 // Declare chrome API types
 declare global {
@@ -49,6 +55,8 @@ const SidePanel = () => {
   >([]);
   const [showAgentHistory, setShowAgentHistory] = useState(false);
   const [showSummarize, setShowSummarize] = useState(false);
+  const [showLinkedIn, setShowLinkedIn] = useState(false);
+  const [availableMCPs, setAvailableMCPs] = useState<MCPConnection[]>([]);
   const [showTabSelector, setShowTabSelector] = useState(false);
   const [tabSummaries] = useState<
     {
@@ -76,7 +84,10 @@ const SidePanel = () => {
     console.log('Selected tabs updated:', selectedTabs);
   }, [selectedTabs]);
   const [showCurrentTabIndicator, setShowCurrentTabIndicator] = useState<boolean>(false);
+  const [selectedMCPs, setSelectedMCPs] = useState<MCPConnection[]>([]);
   const [hasStartedChat, setHasStartedChat] = useState<boolean>(false);
+  const [showEmailCompose, setShowEmailCompose] = useState<boolean>(false);
+  const [emailData, setEmailData] = useState<Partial<EmailData>>({});
   const [selectedMode, setSelectedMode] = useState<string>('ask');
   const sessionIdRef = useRef<string | null>(null);
   const lastTaskTextRef = useRef<string>('');
@@ -95,6 +106,19 @@ const SidePanel = () => {
   }, []);
 
   // Check if models are configured
+  useEffect(() => {
+    checkModelConfiguration();
+    loadAvailableMCPs();
+  }, []);
+
+  const loadAvailableMCPs = async () => {
+    try {
+      const conns = await mcpSettingsStore.getConnections();
+      setAvailableMCPs(conns);
+    } catch (error) {
+      console.error('Failed to load MCP connections:', error);
+    }
+  };
   const checkModelConfiguration = useCallback(async () => {
     try {
       const configuredAgents = await agentModelStore.getConfiguredAgents();
@@ -277,7 +301,20 @@ const SidePanel = () => {
               // Check if task contains summarize keywords and open summarization page
               const taskText = lastTaskTextRef.current;
               if (taskText && containsSummarizeKeywords(taskText)) {
-                openSummarizationPage(sessionIdRef.current || '', taskText);
+                const effectiveTaskId = data?.taskId || '';
+                const finalText = (content || '').trim();
+                if (effectiveTaskId && finalText) {
+                  chrome.storage.local
+                    .set({
+                      [`summarization_result_${effectiveTaskId}`]: {
+                        task: taskText,
+                        result: finalText,
+                        timestamp: Date.now(),
+                      },
+                    })
+                    .catch(err => console.error('Failed to store summarization result:', err));
+                }
+                openSummarizationPage(effectiveTaskId, taskText);
               }
               break;
             case ExecutionState.TASK_FAIL:
@@ -719,9 +756,9 @@ const SidePanel = () => {
         lastTaskTextRef.current = text.toLowerCase();
       }
 
-      // Extract links from text
+      // Extract links from text (use displayText if available to avoid capturing URLs from hidden metadata)
       const urlRegex = /(https?:\/\/[^\s]+)/g;
-      const links = text.match(urlRegex) || [];
+      const links = (displayText || text).match(urlRegex) || [];
 
       // Prepare tabs data (include current tab if indicator is shown)
       const tabsToInclude: Array<{ id: number; title: string; url: string; favIconUrl?: string }> = [];
@@ -1192,14 +1229,27 @@ const SidePanel = () => {
   // Convert messages to Eclipse format
   const eclipseMessages: {
     id?: string;
-    type: 'user' | 'assistant' | 'system';
+    type: 'user' | 'assistant' | 'system' | 'email_compose';
     content: string;
     timestamp?: number;
+    tabs?: any[];
+    links?: string[];
+    emailData?: any;
   }[] = messages.map(msg => ({
     id: `${msg.actor}-${msg.timestamp}`,
-    type: msg.actor === Actors.USER ? 'user' : msg.actor === Actors.SYSTEM ? 'system' : 'assistant',
+    type:
+      msg.content === 'email_compose'
+        ? 'email_compose'
+        : msg.actor === Actors.USER
+          ? 'user'
+          : msg.actor === Actors.SYSTEM
+            ? 'system'
+            : 'assistant',
     content: msg.content,
     timestamp: msg.timestamp,
+    tabs: (msg as any).tabs,
+    links: (msg as any).links,
+    emailData: (msg as any).emailData,
   }));
 
   // Update hasStartedChat when messages change
@@ -1287,16 +1337,174 @@ const SidePanel = () => {
     setShowCurrentTabIndicator(false);
   };
 
-  const handleFooterSendMessage = (text: string, mode?: string) => {
-    handleSendMessage(text);
+  const handleAddMCP = (conn: any) => {
+    // Avoid duplicates
+    if (!selectedMCPs.find(c => c.id === conn.id)) {
+      setSelectedMCPs(prev => [...prev, conn]);
+    }
+  };
+
+  const handleRemoveMCP = (id: string) => {
+    setSelectedMCPs(prev => prev.filter(c => c.id !== id));
+  };
+
+  // Detect if message is an email request and parse email data
+  const detectAndParseEmail = (text: string): Partial<EmailData> | null => {
+    const normalized = text.toLowerCase();
+
+    // Check for email keywords
+    const emailKeywords = ['email', 'mail', 'send', 'bhejo', 'bhej', 'send karo'];
+    const hasEmailKeyword = emailKeywords.some(keyword => normalized.includes(keyword));
+
+    if (!hasEmailKeyword) return null;
+
+    // Extract email address (to field)
+    const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi;
+    const emails = text.match(emailRegex);
+
+    if (!emails || emails.length === 0) return null;
+
+    const to = emails[0];
+
+    // Extract subject from common patterns
+    let subject = '';
+
+    // Pattern 1: "about [subject]"
+    const aboutMatch = text.match(/about\s+(.+?)(?:\s+mail|\s+email|$)/i);
+    if (aboutMatch) {
+      subject = aboutMatch[1].trim();
+    }
+
+    // Pattern 2: Extract context from the message
+    // Remove email address and keywords to get the actual content
+    let context = text
+      .replace(emailRegex, '')
+      .replace(/email|mail|send|bhejo|bhej|send karo/gi, '')
+      .trim();
+
+    // Use context as subject if no explicit subject found
+    if (!subject && context) {
+      // Take first few words as subject
+      const words = context.split(' ').filter(w => w.length > 0);
+      subject = words.slice(0, 3).join(' ');
+      if (subject.length > 50) {
+        subject = subject.substring(0, 50) + '...';
+      }
+    }
+
+    // Return basic data - AI will generate the body
+    return {
+      to,
+      subject: subject || 'Email from Cosmos AI',
+      body: '', // Will be filled by AI
+      userRequest: text, // Store original request for AI
+    } as any;
+  };
+
+  const handleFooterSendMessage = (text: string, mode?: string, displayText?: string) => {
+    // Check if this is an email request
+    const emailData = detectAndParseEmail(displayText || text);
+
+    if (emailData) {
+      // Show user message
+      appendMessage({
+        actor: Actors.USER,
+        content: displayText || text,
+        timestamp: Date.now(),
+      });
+
+      // Send task to AI to generate email content
+      const emailTask = `Generate a professional email with the following details:
+- To: ${emailData.to}
+- Subject: ${emailData.subject}
+- User's request: ${(emailData as any).userRequest}
+
+Please write a complete, professional email body based on the user's request. The email should be polite, clear, and appropriate for the context.`;
+
+      // Send to AI for email generation
+      handleSendMessage(emailTask, displayText);
+
+      // Note: The email compose card will be shown after AI generates the content
+      // For now, we'll show it with the basic data and let user edit
+      setTimeout(() => {
+        appendMessage({
+          actor: Actors.SYSTEM,
+          content: 'email_compose',
+          timestamp: Date.now(),
+          emailData: emailData,
+        } as any);
+
+        setEmailData(emailData);
+        setShowEmailCompose(true);
+      }, 500);
+
+      return;
+    }
+
+    // If not an email request, handle normally
+    handleSendMessage(text, displayText);
   };
 
   const handleModeChange = (mode: string) => {
     setSelectedMode(mode);
   };
 
+  // Handle email sending through Gmail MCP
+  const handleSendEmail = async (emailData: EmailData) => {
+    try {
+      // Find Gmail connection
+      const gmailConnection = availableMCPs.find(
+        conn => conn.serviceType === 'gmail' || conn.serviceName.toLowerCase().includes('gmail'),
+      );
+
+      if (!gmailConnection) {
+        throw new Error('Gmail connection not found. Please configure Gmail in settings.');
+      }
+
+      // Create email task through MCP
+      await mcpSettingsStore.addTask({
+        connectionId: gmailConnection.id,
+        serviceType: gmailConnection.serviceType,
+        action: 'send_email',
+        parameters: {
+          to: emailData.to,
+          cc: emailData.cc,
+          bcc: emailData.bcc,
+          subject: emailData.subject,
+          body: emailData.body,
+        },
+      });
+
+      // Update last used timestamp
+      await mcpSettingsStore.updateConnection(gmailConnection.id, {
+        lastUsed: Date.now(),
+      });
+
+      // Show success message
+      appendMessage({
+        actor: Actors.SYSTEM,
+        content: `Email sent successfully to ${emailData.to}`,
+        timestamp: Date.now(),
+      });
+
+      // Close modal
+      setShowEmailCompose(false);
+      setEmailData({});
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      throw error; // Re-throw to let modal handle the error display
+    }
+  };
+
+  // Open email compose modal with AI-generated content
+  const handleOpenEmailCompose = (data: Partial<EmailData>) => {
+    setEmailData(data);
+    setShowEmailCompose(true);
+  };
+
   // Check if task contains summarize keywords
   const containsSummarizeKeywords = (text: string): boolean => {
+    const normalized = (text || '').toLowerCase();
     const summarizeKeywords = [
       'summarize',
       'summarise',
@@ -1307,9 +1515,20 @@ const SidePanel = () => {
       'summarize kar do',
       'summary banao',
       'summary do',
+      'research',
+      'research karo',
+      'research kar do',
+      'research paper',
+      'paper generate',
+      'generate paper',
+      'generate research paper',
+      'latex',
+      'latex code',
+      'compile',
+      'pdf',
     ];
 
-    return summarizeKeywords.some(keyword => text.includes(keyword));
+    return summarizeKeywords.some(keyword => normalized.includes(keyword));
   };
 
   // Open summarization page
@@ -1327,9 +1546,28 @@ const SidePanel = () => {
     }
   };
 
+  // Handle open summarization from header menu
+  const handleOpenSummarization = () => {
+    // Open summarization page without task ID (user can create new summarization)
+    openSummarizationPage('', 'New Summarization');
+  };
+
+  const handleOpenLinkedIn = () => {
+    setShowLinkedIn(true);
+  };
+
   return (
     <div className="sidebar-container">
-      {showHistory ? (
+      {showLinkedIn ? (
+        <LinkedInAutoApply
+          onClose={() => setShowLinkedIn(false)}
+          onSendMessage={(text: string, displayText?: string) => {
+            setShowLinkedIn(false);
+            setSelectedMode('agent');
+            handleSendMessage(text, displayText);
+          }}
+        />
+      ) : showHistory ? (
         <>
           <EclipseHeader
             hasStartedChat={hasStartedChat}
@@ -1337,6 +1575,8 @@ const SidePanel = () => {
             onNewChat={handleNewChat}
             onLoadHistory={handleLoadHistory}
             onOpenSettings={() => chrome.runtime.openOptionsPage()}
+            onOpenLinkedIn={handleOpenLinkedIn}
+            onOpenSummarization={handleOpenSummarization}
             showHistory={showHistory}
             onBackToChat={() => handleBackToChat(false)}
           />
@@ -1356,7 +1596,11 @@ const SidePanel = () => {
           {/* Show loading state while checking model configuration */}
           {hasConfiguredModels === null && (
             <div className="sidebar-container">
-              <EclipseHeader hasStartedChat={false} title="cosmos ai" />
+              <EclipseHeader
+                hasStartedChat={false}
+                title="cosmos ai"
+                onOpenSettings={() => chrome.runtime.openOptionsPage()}
+              />
               <div className="flex flex-1 items-center justify-center bg-black p-8 text-white">
                 <div className="text-center">
                   <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
@@ -1369,7 +1613,11 @@ const SidePanel = () => {
           {/* Show setup message when no models are configured */}
           {hasConfiguredModels === false && (
             <div className="sidebar-container">
-              <EclipseHeader hasStartedChat={false} title="cosmos ai" />
+              <EclipseHeader
+                hasStartedChat={false}
+                title="cosmos ai"
+                onOpenSettings={() => chrome.runtime.openOptionsPage()}
+              />
               <div className="flex flex-1 items-center justify-center bg-black p-8 text-white">
                 <div className="max-w-md text-center">
                   <div className="mb-4 text-5xl font-bold text-white">cosmos ai</div>
@@ -1393,6 +1641,8 @@ const SidePanel = () => {
                 title="cosmos ai"
                 onNewChat={handleNewChat}
                 onLoadHistory={handleLoadHistory}
+                onOpenSummarization={handleOpenSummarization}
+                onOpenLinkedIn={handleOpenLinkedIn}
                 onOpenSettings={() => chrome.runtime.openOptionsPage()}
                 showHistory={showHistory}
               />
@@ -1405,6 +1655,13 @@ const SidePanel = () => {
                 onChatStart={() => setHasStartedChat(true)}
                 currentAgent={currentAgent}
                 selectedMode={selectedMode}
+                onSendEmail={handleSendEmail}
+                onCloseEmailCompose={() => {
+                  setShowEmailCompose(false);
+                  setEmailData({});
+                  // Remove the email compose message from messages
+                  setMessages(prev => prev.filter(m => (m as any).emailData === undefined));
+                }}
               />
               <EclipseFooter
                 onSendMessage={handleFooterSendMessage}
@@ -1420,6 +1677,12 @@ const SidePanel = () => {
                 maxLimit={5}
                 disabled={!inputEnabled || isHistoricalSession}
                 onModeChange={handleModeChange}
+                showStopButton={showStopButton}
+                onStopTask={handleStopTask}
+                selectedMCPs={selectedMCPs}
+                onRemoveMCP={handleRemoveMCP}
+                availableMCPs={availableMCPs}
+                onAddMCP={handleAddMCP}
               />
             </>
           )}

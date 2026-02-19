@@ -21,6 +21,7 @@ export enum ProviderTypeEnum {
   Llama = 'llama',
   GitHub = 'github',
   CustomOpenAI = 'custom_openai',
+  NVIDIA = 'nvidia',
 }
 
 // Default supported models for each built-in provider
@@ -33,11 +34,24 @@ export const llmProviderModelNames = {
     'claude-3-5-haiku-latest',
   ],
   [ProviderTypeEnum.DeepSeek]: ['deepseek-chat', 'deepseek-reasoner'],
-  [ProviderTypeEnum.Gemini]: ['gemini-2.5-flash', 'gemini-2.5-pro'],
+  [ProviderTypeEnum.Gemini]: [
+    'gemini-3-flash',
+    'gemini-3-flash-preview',
+    'gemini-3-pro',
+    'gemini-2.5-flash',
+    'gemini-2.5-pro',
+  ],
   [ProviderTypeEnum.Grok]: ['grok-3', 'grok-3-fast', 'grok-3-mini', 'grok-3-mini-fast'],
-  [ProviderTypeEnum.Ollama]: ['qwen3:14b', 'falcon3:10b', 'qwen2.5-coder:14b', 'mistral-small:24b'],
+  [ProviderTypeEnum.Ollama]: ['qwen3:14b', 'falcon3:10b', 'qwen2.5-coder:14b', 'mistral-small:24b', 'qwen3-vl:4b'],
   [ProviderTypeEnum.AzureOpenAI]: ['gpt-5', 'gpt-5-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4o'],
-  [ProviderTypeEnum.OpenRouter]: ['google/gemini-2.5-pro', 'google/gemini-2.5-flash', 'openai/gpt-4o-2024-11-20'],
+  [ProviderTypeEnum.OpenRouter]: [
+    'google/gemini-3-flash',
+    'google/gemini-3-flash-preview',
+    'google/gemini-3-pro',
+    'google/gemini-2.5-pro',
+    'google/gemini-2.5-flash',
+    'openai/gpt-4o-2024-11-20',
+  ],
   [ProviderTypeEnum.Groq]: ['llama-3.3-70b-versatile'],
   [ProviderTypeEnum.Cerebras]: ['llama-3.3-70b'],
   [ProviderTypeEnum.Llama]: [
@@ -55,6 +69,7 @@ export const llmProviderModelNames = {
     'openai/gpt-4o',
     'deepseek/deepseek-v3-0324',
   ],
+  [ProviderTypeEnum.NVIDIA]: ['meta/llama-3.3-70b-instruct', 'meta/llama-3.2-90b-vision-instruct'],
   // Custom OpenAI providers don't have predefined models as they are user-defined
 };
 
@@ -168,6 +183,16 @@ export const llmProviderParameters = {
     [AgentNameEnum.Navigator]: {
       temperature: 0.3,
       topP: 0.85,
+    },
+  },
+  [ProviderTypeEnum.NVIDIA]: {
+    [AgentNameEnum.thinker]: {
+      temperature: 0.2,
+      topP: 0.7,
+    },
+    [AgentNameEnum.Navigator]: {
+      temperature: 0.2,
+      topP: 0.7,
     },
   },
 };

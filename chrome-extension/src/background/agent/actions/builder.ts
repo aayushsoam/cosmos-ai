@@ -209,7 +209,8 @@ export class ActionBuilder {
     actions.push(goBack);
 
     const wait = new Action(async (input: z.infer<typeof waitActionSchema.schema>) => {
-      const seconds = input.seconds || 3;
+      // Reduced default wait time from 3s to 1s for ultra-fast execution
+      const seconds = input.seconds || 1;
       const intent = input.intent || t('act_wait_start', [seconds.toString()]);
       this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_START, intent);
       await new Promise(resolve => setTimeout(resolve, seconds * 1000));

@@ -8,7 +8,7 @@ interface MindMapNode {
   children?: MindMapNode[];
   x?: number;
   y?: number;
-  aiAnswer?: string;
+  collapsed?: boolean;
 }
 
 interface MindMapProps {
@@ -19,248 +19,335 @@ interface MindMapProps {
 
 const MindMap: React.FC<MindMapProps> = ({ data, onNodeClick, selectedNode }) => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [viewState, setViewState] = useState({ scale: 0.9, x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['root']));
+  const [hoveredNode, setHoveredNode] = useState<MindMapNode | null>(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [is3D, setIs3D] = useState(false); // New 3D State
 
+  // Initialize expanded state
+  useEffect(() => {
+    if (data) {
+      const initialExpanded = new Set(['root']);
+      if (data.id) initialExpanded.add(data.id);
+      if (data.children) {
+        data.children.forEach(child => initialExpanded.add(child.id));
+      }
+      setExpandedNodes(initialExpanded);
+    }
+  }, [data]);
+
+  // Handle Resize and Initial Centering
   useEffect(() => {
     const updateDimensions = () => {
-      if (svgRef.current) {
-        const rect = svgRef.current.getBoundingClientRect();
-        setDimensions({ width: rect.width, height: rect.height });
+      if (containerRef.current) {
+        const { clientWidth, clientHeight } = containerRef.current;
+        setDimensions({ width: clientWidth, height: clientHeight });
+        if (viewState.x === 0 && viewState.y === 0) {
+          setViewState(prev => ({ ...prev, x: clientWidth / 2, y: clientHeight / 2 }));
+        }
       }
     };
-
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
-  // Calculate positions for left-to-right layout (like notebook LLM)
-  const calculatePositions = useCallback(
-    (
-      node: MindMapNode,
-      level: number = 0,
-      index: number = 0,
-      siblings: number = 1,
-      parentY?: number,
-      startY?: number,
-      height: number = 800,
-    ): { node: MindMapNode; totalHeight: number } => {
-      const horizontalSpacing = 300; // Space between columns (increased for better spacing)
-      const verticalSpacing = 100; // Space between nodes in same column (increased)
-      const startX = 80; // Left margin
-      const startYPos = 120; // Top margin
+  // --- Layout Algorithm ---
+  const calculateLayout = useCallback((root: MindMapNode, expandedSet: Set<string>) => {
+    const LEVEL_WIDTH = 300;
+    const NODE_HEIGHT = 80;
 
-      let currentY = startY || startYPos;
-      let totalHeight = 0;
+    if (!root) return { nodes: [], links: [] };
 
-      // Calculate node position
-      node.x = startX + level * horizontalSpacing;
+    const hierarchy = JSON.parse(JSON.stringify(root));
+    const nodes: any[] = [];
+    const links: any[] = [];
 
-      if (level === 0) {
-        // Root node - center vertically
-        node.y = height / 2;
-        totalHeight = 60; // Node height
+    const traverse = (node: any, depth: 0, parent: any = null) => {
+      node.depth = depth;
+      node.parent = parent;
+      nodes.push(node);
+
+      if (node.children && expandedSet.has(node.id)) {
+        node.children.forEach((child: any) => traverse(child, depth + 1, node));
       } else {
-        // Calculate vertical position based on siblings
-        if (parentY !== undefined && startY !== undefined) {
-          // Position relative to parent and siblings
-          const siblingOffset = (index - (siblings - 1) / 2) * verticalSpacing;
-          node.y = parentY + siblingOffset;
-        } else {
-          node.y = currentY;
-        }
-        totalHeight = 50; // Node height
+        node.children = null;
       }
+    };
+    traverse(hierarchy, 0);
 
-      // Process children
-      let childrenHeight = 0;
-      if (node.children && node.children.length > 0) {
-        let childStartY = node.y - ((node.children.length - 1) * verticalSpacing) / 2;
+    let leafIndex = 0;
+    const assignLeafY = (node: any) => {
+      if (!node.children || node.children.length === 0) {
+        node.y = leafIndex * NODE_HEIGHT;
+        leafIndex++;
+      } else {
+        node.children.forEach(assignLeafY);
+        const firstChild = node.children[0];
+        const lastChild = node.children[node.children.length - 1];
+        node.y = (firstChild.y + lastChild.y) / 2;
+      }
+    };
+    assignLeafY(hierarchy);
 
-        node.children = node.children.map((child, i) => {
-          const result = calculatePositions(
-            child,
-            level + 1,
-            i,
-            node.children!.length,
-            node.y,
-            childStartY + i * verticalSpacing,
-            height,
-          );
-          childrenHeight = Math.max(childrenHeight, result.totalHeight);
-          return result.node;
+    const totalHeight = leafIndex * NODE_HEIGHT;
+    const yOffset = -totalHeight / 2;
+
+    const finalize = (node: any) => {
+      node.targetX = node.depth * LEVEL_WIDTH;
+      node.targetY = node.y + yOffset;
+
+      if (node.children) {
+        node.children.forEach((child: any) => {
+          links.push({ source: node, target: child });
+          finalize(child);
         });
       }
-
-      totalHeight = Math.max(totalHeight, childrenHeight);
-      return { node, totalHeight };
-    },
-    [],
-  );
-
-  const positionedData = useMemo(() => {
-    if (dimensions.width > 0 && dimensions.height > 0) {
-      try {
-        const clonedData = JSON.parse(JSON.stringify(data));
-        return calculatePositions(clonedData, 0, 0, 1, undefined, undefined, dimensions.height).node;
-      } catch (error) {
-        console.error('Error calculating positions:', error);
-        return data;
-      }
-    }
-    return data;
-  }, [data, dimensions.width, dimensions.height]);
-
-  const getNodeColor = (level: number, isRoot: boolean): string => {
-    // Match image style - all nodes have dark background
-    return '#1f2937'; // Dark grey for all nodes
-  };
-
-  const getNodeStrokeColor = (level: number, isRoot: boolean): string => {
-    // Match image style - subtle borders
-    if (isRoot) return '#4b5563';
-    if (level === 1) return '#4b5563';
-    if (level === 2) return '#4b5563';
-    return '#6b7280'; // Lighter stroke for detail nodes
-  };
-
-  const renderNode = (node: MindMapNode, parent?: MindMapNode, level: number = 0): React.ReactNode => {
-    if (!node.x || !node.y) return null;
-
-    const isSelected = selectedNode?.id === node.id;
-    const isRoot = node.id === 'root';
-    const hasChildren = node.children && node.children.length > 0;
-
-    // Node dimensions - match image style
-    const boxWidth = isRoot ? 280 : level === 1 ? 200 : level === 2 ? 180 : 160;
-    const boxHeight = isRoot ? 60 : level <= 2 ? 50 : 45;
-    const cornerRadius = 6;
-
-    const nodeColor = getNodeColor(level, isRoot);
-    const strokeColor = isSelected ? '#3b82f6' : getNodeStrokeColor(level, isRoot);
-
-    // Calculate curved path for connection
-    const getCurvedPath = (): string => {
-      if (!parent || !parent.x || !parent.y) return '';
-
-      const startX = parent.x + (isRoot ? 110 : 80);
-      const startY = parent.y;
-      const endX = node.x;
-      const endY = node.y;
-
-      // Create a smooth curve
-      const controlX1 = startX + (endX - startX) * 0.5;
-      const controlY1 = startY;
-      const controlX2 = startX + (endX - startX) * 0.5;
-      const controlY2 = endY;
-
-      return `M ${startX} ${startY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${endX} ${endY}`;
     };
+    finalize(hierarchy);
+
+    return { nodes, links };
+  }, []);
+
+  const { nodes: plottedNodes, links: plottedLinks } = useMemo(() => {
+    return calculateLayout(data, expandedNodes);
+  }, [data, expandedNodes, calculateLayout]);
+
+  // --- Interactions ---
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      const scaleFactor = 1.1;
+      const direction = e.deltaY > 0 ? -1 : 1;
+      const newScale = direction > 0 ? viewState.scale * scaleFactor : viewState.scale / scaleFactor;
+      const clampedScale = Math.max(0.1, Math.min(newScale, 5));
+      setViewState(prev => ({ ...prev, scale: clampedScale }));
+    } else {
+      setViewState(prev => ({
+        ...prev,
+        x: prev.x - e.deltaX,
+        y: prev.y - e.deltaY,
+      }));
+    }
+  };
+
+  const startPan = (e: React.MouseEvent) => {
+    if ((e.target as Element).tagName === 'svg' || (e.target as Element).id === 'mindmap-bg') {
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - viewState.x, y: e.clientY - viewState.y });
+    }
+  };
+
+  const doPan = (e: React.MouseEvent) => {
+    if (isDragging) {
+      setViewState(prev => ({
+        ...prev,
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y,
+      }));
+    }
+  };
+
+  const endPan = () => setIsDragging(false);
+
+  const toggleNode = (e: React.MouseEvent, nodeId: string) => {
+    e.stopPropagation();
+    const newExpanded = new Set(expandedNodes);
+    if (newExpanded.has(nodeId)) {
+      newExpanded.delete(nodeId);
+    } else {
+      newExpanded.add(nodeId);
+    }
+    setExpandedNodes(newExpanded);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    doPan(e);
+    if (hoveredNode) {
+      setTooltipPos({ x: e.clientX + 15, y: e.clientY + 15 });
+    }
+  };
+
+  // --- Rendering ---
+  const renderLink = (link: any) => {
+    const { source, target } = link;
+    const sourceX = source.targetX + (source.depth === 0 ? 125 : 100);
+    const targetX = target.targetX - 100;
+    const sourceY = source.targetY;
+    const targetY = target.targetY;
+
+    const midX = (sourceX + targetX) / 2;
+    const d = `M${sourceX},${sourceY} C${midX},${sourceY} ${midX},${targetY} ${targetX},${targetY}`;
 
     return (
-      <g key={node.id}>
-        {/* Draw curved line from parent to child with arrow */}
-        {parent && parent.x && parent.y && (
-          <path
-            d={getCurvedPath()}
-            fill="none"
-            stroke={isSelected ? '#3b82f6' : '#6b7280'}
-            strokeWidth={isSelected ? '2.5' : '1.5'}
-            className="mindmap-line"
-            opacity="0.6"
-            markerEnd="url(#arrowhead)"
-          />
-        )}
+      <path
+        key={`link-${source.id}-${target.id}`}
+        d={d}
+        className="mindmap-link"
+        stroke="#4f46e5"
+        strokeWidth={Math.max(1, 3 - source.depth * 0.5)}
+        opacity={0.6}
+      />
+    );
+  };
 
-        {/* Node rectangle (notebook LLM style) */}
+  const renderNode = (node: any) => {
+    const isRoot = node.depth === 0;
+    const isSelected = selectedNode?.id === node.id;
+    const hasChildren = findNodeInTree(data, node.id)?.children?.length > 0;
+    const isExpanded = expandedNodes.has(node.id);
+
+    const width = isRoot ? 250 : 200;
+    const height = isRoot ? 80 : 60;
+    const cornerRadius = 10;
+
+    return (
+      <g
+        key={`node-${node.id}`}
+        transform={`translate(${node.targetX}, ${node.targetY})`}
+        className="mindmap-node-group"
+        onClick={e => {
+          e.stopPropagation();
+          onNodeClick(findNodeInTree(data, node.id) || node);
+        }}
+        onMouseEnter={() => setHoveredNode(node)}
+        onMouseLeave={() => setHoveredNode(null)}
+        style={
+          is3D
+            ? { transform: `translate3d(${node.targetX}px, ${node.targetY}px, ${isSelected ? 50 : 0}px)` }
+            : undefined
+        } // Add depth in 3D mode
+      >
         <rect
-          x={node.x}
-          y={node.y - boxHeight / 2}
-          width={boxWidth}
-          height={boxHeight}
+          x={-width / 2}
+          y={-height / 2}
+          width={width}
+          height={height}
           rx={cornerRadius}
-          ry={cornerRadius}
-          fill={isSelected ? '#3b82f6' : nodeColor}
-          stroke={strokeColor}
-          strokeWidth={isSelected ? '3' : '2'}
-          className="mindmap-node"
-          onClick={() => onNodeClick(node)}
-          style={{ cursor: 'pointer' }}
+          className={`mindmap-node-rect ${isRoot ? 'root' : ''} ${isSelected ? 'selected' : ''}`}
         />
 
-        {/* Node label text - wrap long text */}
         <text
-          x={node.x + boxWidth / 2}
-          y={node.y}
+          x={0}
+          y={0}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill="#ffffff"
-          fontSize={isRoot ? '15' : level === 1 ? '13' : level === 2 ? '12' : '11'}
-          fontWeight={isRoot ? 'bold' : level <= 1 ? '600' : 'normal'}
           className="mindmap-label"
-          onClick={() => onNodeClick(node)}
-          style={{ cursor: 'pointer', pointerEvents: 'none' }}>
-          {node.label.length > 30 ? node.label.substring(0, 27) + '...' : node.label}
+          fontSize={isRoot ? 16 : 13}>
+          {node.label.length > 25 ? node.label.substring(0, 25) + '...' : node.label}
         </text>
 
-        {/* Expand indicator (+) for nodes with children - match image style */}
-        {hasChildren && (
-          <text
-            x={node.x + boxWidth - 15}
-            y={node.y - boxHeight / 2 + 12}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fill="#9ca3af"
-            fontSize="16"
-            fontWeight="bold"
-            className="expand-indicator"
-            style={{ pointerEvents: 'none' }}>
-            +
-          </text>
+        {hasChildren && !isRoot && (
+          <g
+            className="mindmap-expander"
+            transform={`translate(${width / 2}, 0)`}
+            onClick={e => toggleNode(e, node.id)}
+            style={{ cursor: 'pointer' }}>
+            <circle r={9} fill="#1e293b" stroke="#475569" strokeWidth={1.5} />
+            <text y={1} textAnchor="middle" dominantBaseline="middle" fill="#94a3b8" fontSize={14} fontWeight="bold">
+              {isExpanded ? '-' : '+'}
+            </text>
+          </g>
         )}
-
-        {/* Render children */}
-        {node.children?.map((child, i) => renderNode(child, node, level + 1))}
       </g>
     );
   };
 
-  const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 2));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.5));
-  const handleZoomReset = () => setZoom(1);
-
   return (
-    <div className="mindmap-container">
+    <div
+      ref={containerRef}
+      className={`mindmap-container ${is3D ? 'view-3d' : ''}`} // Apply 3D class
+      onWheel={handleWheel}
+      onMouseDown={startPan}
+      onMouseMove={handleMouseMove}
+      onMouseUp={endPan}
+      onMouseLeave={endPan}>
+      <div id="mindmap-bg" style={{ position: 'absolute', inset: 0 }} />
+
       <svg
         ref={svgRef}
         className="mindmap-svg"
-        width="100%"
-        height="100%"
-        viewBox={dimensions.width > 0 ? `0 0 ${dimensions.width} ${dimensions.height}` : '0 0 1200 800'}
-        preserveAspectRatio="xMidYMid meet"
-        style={{
-          transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
-          transformOrigin: 'top left',
-        }}>
-        {dimensions.width > 0 && positionedData && renderNode(positionedData, undefined, 0)}
+        viewBox={`${-viewState.x + dimensions.width / 2} ${-viewState.y + dimensions.height / 2} ${dimensions.width} ${dimensions.height}`}
+        style={
+          is3D
+            ? {
+                transform: 'rotateX(25deg) rotateY(0deg) scale(0.9)',
+                transformStyle: 'preserve-3d',
+                transition: 'transform 0.5s ease',
+              }
+            : { transition: 'transform 0.5s ease' }
+        }>
+        <g
+          transform={`translate(${viewState.x}, ${viewState.y}) scale(${viewState.scale})`}
+          style={{ transformStyle: 'preserve-3d' }}>
+          {plottedLinks.map(renderLink)}
+          {plottedNodes.map(renderNode)}
+        </g>
       </svg>
 
-      {/* Zoom Controls */}
+      {/* Tooltip */}
+      {hoveredNode && !isDragging && (
+        <div className={`mindmap-tooltip visible`} style={{ top: tooltipPos.y, left: tooltipPos.x }}>
+          <div className="mindmap-tooltip-title">{hoveredNode.label}</div>
+          <div className="mindmap-tooltip-content">{hoveredNode.content}</div>
+        </div>
+      )}
+
+      {/* 3D Toggle */}
+      <div className="view-controls" style={{ position: 'absolute', top: 20, right: 20, zIndex: 100 }}>
+        <button
+          className={`view-btn ${is3D ? 'active' : ''}`}
+          onClick={() => setIs3D(!is3D)}
+          style={{
+            background: is3D ? 'rgba(99, 102, 241, 0.8)' : 'rgba(15, 23, 42, 0.6)',
+            color: 'white',
+            border: '1px solid rgba(255,255,255,0.1)',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: '600',
+            backdropFilter: 'blur(8px)',
+            boxShadow: is3D ? '0 0 15px rgba(99, 102, 241, 0.5)' : 'none',
+            transition: 'all 0.3s ease',
+          }}>
+          {is3D ? 'Default View' : '3D View'}
+        </button>
+      </div>
+
+      {/* Controls */}
+      <button
+        className="fit-btn"
+        onClick={() => setViewState({ x: dimensions.width / 2, y: dimensions.height / 2, scale: 0.9 })}>
+        ⌂ Recenter
+      </button>
+
       <div className="zoom-controls">
-        <button className="zoom-btn" onClick={handleZoomIn} title="Zoom In">
+        <button className="zoom-btn" onClick={() => setViewState(s => ({ ...s, scale: Math.min(s.scale * 1.2, 5) }))}>
           +
         </button>
-        <button className="zoom-btn" onClick={handleZoomOut} title="Zoom Out">
+        <button className="zoom-btn" onClick={() => setViewState(s => ({ ...s, scale: Math.max(s.scale / 1.2, 0.1) }))}>
           −
-        </button>
-        <button className="zoom-btn" onClick={handleZoomReset} title="Reset Zoom">
-          ⌂
         </button>
       </div>
     </div>
   );
 };
+
+// Helper: Find original data node
+function findNodeInTree(root: any, id: string): any {
+  if (root.id === id) return root;
+  if (root.children) {
+    for (const child of root.children) {
+      const found = findNodeInTree(child, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
 
 export default MindMap;

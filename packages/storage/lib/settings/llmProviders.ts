@@ -69,6 +69,7 @@ export function getProviderTypeByProviderId(providerId: string): ProviderTypeEnu
     case ProviderTypeEnum.Cerebras:
     case ProviderTypeEnum.Llama:
     case ProviderTypeEnum.GitHub:
+    case ProviderTypeEnum.NVIDIA:
       return providerId;
     default:
       return ProviderTypeEnum.CustomOpenAI;
@@ -103,6 +104,8 @@ export function getDefaultDisplayNameFromProviderId(providerId: string): string 
       return 'Llama';
     case ProviderTypeEnum.GitHub:
       return 'GitHub Models';
+    case ProviderTypeEnum.NVIDIA:
+      return 'NVIDIA';
     default:
       return providerId; // Use the provider id as display name for custom providers by default
   }
@@ -121,6 +124,7 @@ export function getDefaultProviderConfig(providerId: string): ProviderConfig {
     case ProviderTypeEnum.Cerebras: // Cerebras uses modelNames
     case ProviderTypeEnum.Llama: // Llama uses modelNames
     case ProviderTypeEnum.GitHub: // GitHub Models uses modelNames
+    case ProviderTypeEnum.NVIDIA: // NVIDIA uses modelNames
       return {
         apiKey: '',
         name: getDefaultDisplayNameFromProviderId(providerId),
@@ -132,7 +136,9 @@ export function getDefaultProviderConfig(providerId: string): ProviderConfig {
               ? 'https://api.llama.com/v1'
               : providerId === ProviderTypeEnum.GitHub
                 ? 'https://models.github.ai/inference'
-                : undefined,
+                : providerId === ProviderTypeEnum.NVIDIA
+                  ? 'https://integrate.api.nvidia.com/v1'
+                  : undefined,
         modelNames: [...(llmProviderModelNames[providerId] || [])],
         createdAt: Date.now(),
       };

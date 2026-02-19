@@ -25,6 +25,7 @@ import { chatHistoryStore } from '@extension/storage/lib/chat';
 import type { AgentStepHistory } from './history';
 import type { GeneralSettingsConfig } from '@extension/storage';
 import { analytics } from '../services/analytics';
+import { SERVICE_CAPABILITIES } from './capabilities';
 
 const logger = createLogger('Executor');
 
@@ -41,8 +42,9 @@ export class Executor {
   private readonly context: AgentContext;
   private readonly thinkerPrompt: thinkerPrompt;
   private readonly navigatorPrompt: NavigatorPrompt;
-  private readonly generalSettings: GeneralSettingsConfig | undefined;
+  private generalSettings: GeneralSettingsConfig | undefined;
   private tasks: string[] = [];
+  private lastPlanningStep = -1;
   constructor(
     task: string,
     taskId: string,
@@ -64,7 +66,25 @@ export class Executor {
     );
 
     this.generalSettings = extraArgs?.generalSettings;
-    this.tasks.push(task);
+
+    // Inject MCP capabilities if tools are selected
+    let enrichedTask = task;
+    if (task.includes('Selected MCP Tools:')) {
+      const toolSection = task.split('Selected MCP Tools:')[1];
+      const capabilitiesToAdd: string[] = [];
+
+      Object.entries(SERVICE_CAPABILITIES).forEach(([service, caps]) => {
+        if (toolSection.toLowerCase().includes(service.toLowerCase())) {
+          capabilitiesToAdd.push(`\nSupported Actions for ${service.toUpperCase()}:\n- ${caps.join('\n- ')}`);
+        }
+      });
+
+      if (capabilitiesToAdd.length > 0) {
+        enrichedTask += '\n\n' + capabilitiesToAdd.join('\n');
+      }
+    }
+
+    this.tasks.push(enrichedTask);
     this.navigatorPrompt = new NavigatorPrompt(context.options.maxActionsPerStep);
     this.thinkerPrompt = new thinkerPrompt();
 
@@ -86,7 +106,7 @@ export class Executor {
 
     this.context = context;
     // Initialize message history
-    this.context.messageManager.initTaskMessages(this.navigatorPrompt.getSystemMessage(), task);
+    this.context.messageManager.initTaskMessages(this.navigatorPrompt.getSystemMessage(), enrichedTask);
   }
 
   subscribeExecutionEvents(callback: EventCallback): void {
@@ -142,10 +162,10 @@ export class Executor {
       let latestPlanOutput: AgentOutput<thinkerOutput> | null = null;
       let navigatorDone = false;
 
-      // Adaptive planning interval based on task complexity and error rate
-      // Bias toward faster replanning for speed/accuracy
+      // Adaptive planning interval - optimized for credit efficiency while maintaining speed
+      // Balanced default: 2-3 steps to reduce API calls while keeping tasks fast
       let adaptivePlanningInterval = Math.max(2, Math.min(context.options.planningInterval ?? 3, 4));
-      let lastPlanningStep = -1;
+      this.lastPlanningStep = -1;
 
       for (step = 0; step < allowedMaxSteps; step++) {
         context.stepInfo = {
@@ -158,29 +178,36 @@ export class Executor {
           break;
         }
 
-        // Adaptive planning: adjust interval based on performance
-        const stepsSinceLastPlanning = context.nSteps - lastPlanningStep;
+        // Adaptive planning: adjust interval based on performance (optimized for credit efficiency)
+        const stepsSinceLastPlanning = context.nSteps - this.lastPlanningStep;
         const shouldPlan =
           stepsSinceLastPlanning >= adaptivePlanningInterval ||
-          navigatorDone ||
-          context.consecutiveFailures > 0 ||
+          (navigatorDone && stepsSinceLastPlanning >= 1) || // Only plan if at least 1 step since last planning
+          (context.consecutiveFailures > 0 && stepsSinceLastPlanning >= 1) || // Plan on failures but not every step
           context.nSteps === 0; // Always plan on first step
+
+        // Skip planning if navigator just completed (will be handled by continue statement)
+        // This prevents double planning when navigator indicates completion
 
         // Run thinker with adaptive interval
         if (this.thinker && shouldPlan) {
           navigatorDone = false;
-          lastPlanningStep = context.nSteps;
+          this.lastPlanningStep = context.nSteps;
 
           latestPlanOutput = await this.runthinker();
 
-          // Adjust planning interval based on task progress
+          // Adjust planning interval based on task progress - optimized for credit efficiency
           if (latestPlanOutput?.result) {
-            // If making good progress, keep interval tight but allow slight relaxation
+            // If making good progress, slightly relax interval to save credits (2-4 steps)
             if (latestPlanOutput.result.done === false && context.consecutiveFailures === 0) {
-              adaptivePlanningInterval = Math.min(adaptivePlanningInterval + 1, 5);
+              // For simple tasks with no challenges, allow longer intervals (max 4) to save API calls
+              adaptivePlanningInterval = Math.min(adaptivePlanningInterval + 1, 4);
             } else if (context.consecutiveFailures > 0 || latestPlanOutput.result.challenges) {
-              // If facing challenges, plan more frequently and reset failures faster
-              adaptivePlanningInterval = 2;
+              // If facing challenges, plan more frequently (interval = 2) for faster adaptation
+              adaptivePlanningInterval = Math.max(2, adaptivePlanningInterval - 1);
+            } else if (!latestPlanOutput.result.challenges && latestPlanOutput.result.observation) {
+              // If task seems simple and progressing well, keep interval at 3 to save credits
+              adaptivePlanningInterval = Math.max(3, adaptivePlanningInterval);
             }
           }
 
@@ -195,9 +222,11 @@ export class Executor {
 
         // If navigator indicates completion, trigger immediate planning for validation
         if (navigatorDone) {
-          logger.info('🔄 Navigator indicates completion - will be validated by next thinker run');
-          // Force planning on next iteration
-          lastPlanningStep = -1;
+          logger.info('🔄 Navigator indicates completion - triggering immediate validation');
+          // Force immediate planning for fast validation
+          this.lastPlanningStep = -1;
+          // Skip to next iteration to run thinker immediately
+          continue;
         }
       }
 
@@ -329,9 +358,11 @@ export class Executor {
           throw new MaxFailuresReachedError(t('exec_errors_maxFailuresReached'));
         }
 
-        // If we have multiple consecutive failures, suggest re-planning
-        if (context.consecutiveFailures >= 3) {
-          logger.warning('Multiple consecutive failures detected - consider re-planning strategy');
+        // If we have multiple consecutive failures, trigger immediate re-planning
+        if (context.consecutiveFailures >= 2) {
+          logger.warning('Multiple consecutive failures detected - triggering re-planning');
+          // Force planning on next iteration
+          this.lastPlanningStep = -1;
         }
 
         return false;
@@ -381,8 +412,9 @@ export class Executor {
       return true;
     }
 
+    // Optimized pause check - reduce polling interval to 50ms for faster response
     while (this.context.paused) {
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 50));
       if (this.context.stopped) {
         return true;
       }

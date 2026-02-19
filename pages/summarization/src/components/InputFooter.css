@@ -1,0 +1,351 @@
+/* InputFooter.css */
+
+.footer-container {
+    border: 1px solid #303030;
+    padding: 5px;
+    background: #1a1a1a;
+    margin: 16px;
+    border-radius: 10px;
+    position: relative;
+    /* Changed from fixed to relative for SummarizationPage placement */
+    /* If sticking to bottom is desired, we can style the parent */
+    width: calc(100% - 32px);
+    z-index: 100;
+}
+
+.footer-row {
+    margin-bottom: 0px;
+}
+
+.footer-row:last-child {
+    margin-bottom: 0;
+}
+
+.footer-row:first-child {
+    padding: 4px;
+    text-align: left;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-height: 32px;
+}
+
+.context-button {
+    background: transparent;
+    border: 1px solid #303030;
+    color: #6e6e6e;
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.context-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.context-dropdown-options {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: #1a1a1a;
+    border: 1px solid #303030;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    z-index: 1000;
+    width: 280px;
+    max-height: 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+.context-dropdown-option {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: #8d8d8d;
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: flex-start;
+    text-align: left;
+    font-size: 12px;
+    transition: background-color 0.2s ease;
+}
+
+.context-dropdown-option:hover {
+    background: #333333;
+    color: #ffffff;
+}
+
+.context-option-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.context-option-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.context-option-icon {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    opacity: 0.8;
+}
+
+.go-back-option {
+    color: white !important;
+    font-weight: 500;
+    position: sticky;
+    top: 0;
+    background: #1a1a1a;
+    z-index: 10;
+    border-bottom: 1px solid #404040;
+}
+
+.go-back-option:hover {
+    background: #333333 !important;
+    color: #ffffff !important;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #404040;
+    margin: 0;
+    position: sticky;
+    top: 40px;
+    background: #262626;
+    z-index: 9;
+}
+
+.tabs-scroll-container {
+    overflow-y: auto;
+    max-height: 220px;
+    flex: 1;
+}
+
+.tabs-scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tabs-scroll-container::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.tabs-scroll-container::-webkit-scrollbar-thumb {
+    background: #404040;
+}
+
+.tab-option {
+    padding: 8px 12px;
+}
+
+.tab-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    position: relative;
+}
+
+.tab-favicon {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    object-fit: contain;
+}
+
+.tab-title {
+    font-weight: 500;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 12px;
+    width: 200px;
+    flex-shrink: 0;
+}
+
+.tab-checkmark {
+    width: 12px;
+    height: 10px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.tab-option.selected {
+    background: #2a2a2a;
+}
+
+.current-tab-indicator,
+.selected-tab-indicator {
+    background: transparent;
+    border: 1px dashed #303030;
+    color: #6e6e6e;
+    padding: 4px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-left: 0px;
+    line-height: 1;
+    height: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    vertical-align: top;
+    flex-shrink: 0;
+    transition: border-color 0.2s ease;
+    cursor: pointer;
+}
+
+.current-tab-indicator:hover,
+.selected-tab-indicator:hover {
+    border-color: #ffffff;
+}
+
+.selected-tab-favicon,
+.current-tab-icon {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.selected-tab-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+}
+
+.editable-span {
+    display: block;
+    min-height: 20px;
+    width: 100%;
+    padding: 8px;
+    color: #ffffff;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+.editable-span:empty:before {
+    content: attr(data-placeholder);
+    color: #6e6e6e;
+    pointer-events: none;
+}
+
+.footer-column {
+    display: flex;
+    align-items: center;
+}
+
+.custom-select {
+    position: relative;
+}
+
+.select-button {
+    background: transparent;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+    font-size: 13px;
+}
+
+.select-button:hover {
+    background: #2a2a2a;
+    color: #fff;
+}
+
+.option-icon {
+    width: 14px;
+    height: 14px;
+    opacity: 0.7;
+}
+
+.dropdown-options {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: #1f1f1f;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 4px;
+    min-width: 140px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    margin-bottom: 8px;
+}
+
+.dropdown-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: #ccc;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 13px;
+    text-align: left;
+}
+
+.dropdown-option:hover {
+    background: #333;
+    color: #fff;
+}
+
+.dropdown-option.selected {
+    background: #2a2a2a;
+    color: #fff;
+}
+
+.circular-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: #2a2a2a;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: auto;
+}
+
+.circular-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.circular-button.has-content {
+    background: #ffffff;
+    color: #000000;
+}
+
+.submit-icon {
+    width: 16px;
+    height: 16px;
+    /* Invert filter for dark icon on light background if needed */
+}

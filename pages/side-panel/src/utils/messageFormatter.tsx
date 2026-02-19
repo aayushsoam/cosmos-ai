@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from '../components/CodeBlock';
 import TableFormatter from '../components/TableFormatter';
+import LinkDisplay from '../components/LinkDisplay';
 
 // Detect code blocks in text
 const detectCodeBlocks = (text: string): Array<{ isCode: boolean; language?: string; content: string }> => {
@@ -137,11 +138,22 @@ const markdownComponents = {
   ol: ({ children }: any) => <ol className="markdown-ol">{children}</ol>,
   li: ({ children }: any) => <li className="markdown-li">{children}</li>,
   blockquote: ({ children }: any) => <blockquote className="markdown-blockquote">{children}</blockquote>,
-  a: ({ href, children }: any) => (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="markdown-link">
-      {children}
-    </a>
-  ),
+  a: ({ href, children }: any) => {
+    // Check if this is a standalone URL (href === children text)
+    const isStandaloneUrl = href && children && children.toString() === href;
+
+    if (isStandaloneUrl) {
+      // Use LinkDisplay for standalone URLs to show favicon
+      return <LinkDisplay url={href} />;
+    }
+
+    // For regular markdown links [text](url), use standard link
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className="markdown-link">
+        {children}
+      </a>
+    );
+  },
   table: ({ children }: any) => <table className="markdown-table">{children}</table>,
   thead: ({ children }: any) => <thead className="markdown-thead">{children}</thead>,
   tbody: ({ children }: any) => <tbody className="markdown-tbody">{children}</tbody>,

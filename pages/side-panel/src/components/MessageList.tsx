@@ -3,6 +3,9 @@ import { ACTOR_PROFILES } from '../types/message';
 import { memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import rehypeHighlight from 'rehype-highlight';
 
 interface MessageListProps {
   messages: Message[];
@@ -69,7 +72,8 @@ function MessageBlock({ message, isSameActor, isDarkMode = false }: MessageBlock
               </div>
             ) : (
               <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
+                remarkPlugins={[remarkGfm, remarkMath]}
+                rehypePlugins={[rehypeKatex, rehypeHighlight]}
                 components={{
                   h1: ({ children }) => <h1 className="mb-3 mt-4 text-2xl font-bold text-white">{children}</h1>,
                   h2: ({ children }) => <h2 className="mb-2 mt-3 text-xl font-bold text-white">{children}</h2>,
@@ -80,18 +84,68 @@ function MessageBlock({ message, isSameActor, isDarkMode = false }: MessageBlock
                   em: ({ children }) => <em className="italic text-white">{children}</em>,
                   code: ({ className, children, ...props }) => {
                     const match = /language-(\w+)/.exec(className || '');
-                    const isInline = !className;
-                    return isInline ? (
-                      <code className="rounded bg-gray-800 px-1.5 py-0.5 text-sm text-white" {...props}>
-                        {children}
-                      </code>
-                    ) : (
-                      <code className="block overflow-x-auto rounded bg-gray-800 p-3 text-sm text-white" {...props}>
-                        {children}
-                      </code>
+                    const isInline = !match;
+                    const language = match ? match[1] : '';
+
+                    if (isInline) {
+                      return (
+                        <code className="rounded bg-gray-800 px-1.5 py-0.5 text-sm text-white" {...props}>
+                          {children}
+                        </code>
+                      );
+                    }
+
+                    // For block code, render with ChatGPT-like container
+                    return (
+                      <div className="rainbow-border my-4">
+                        <div className="code-header">
+                          <span style={{ textTransform: 'lowercase' }}>{language || 'code'}</span>
+                          <button
+                            className="code-copy-btn"
+                            onClick={e => {
+                              // Simple copy functionality
+                              let codeText = '';
+                              if (Array.isArray(children)) {
+                                codeText = children.map(c => String(c)).join('');
+                              } else {
+                                codeText = String(children);
+                              }
+                              // Clean up newlines at end
+                              codeText = codeText.replace(/\n$/, '');
+
+                              navigator.clipboard.writeText(codeText);
+                              const btn = e.currentTarget;
+                              const originalText = btn.innerHTML;
+                              btn.innerText = 'Copied!';
+                              setTimeout(() => {
+                                btn.innerHTML = originalText;
+                              }, 2000);
+                            }}>
+                            <svg
+                              stroke="currentColor"
+                              fill="none"
+                              strokeWidth="2"
+                              viewBox="0 0 24 24"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              height="1em"
+                              width="1em"
+                              xmlns="http://www.w3.org/2000/svg">
+                              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                            </svg>
+                            Copy
+                          </button>
+                        </div>
+                        <div className="p-0 overflow-x-auto bg-[#0d0d0d]">
+                          <code className={`block p-4 text-sm font-mono ${className}`} {...props}>
+                            {children}
+                          </code>
+                        </div>
+                      </div>
                     );
                   },
-                  pre: ({ children }) => <pre className="mb-2 overflow-x-auto rounded bg-gray-800 p-3">{children}</pre>,
+                  pre: ({ children }) => <div className="not-prose">{children}</div>, // Removed default styling, handled by code block
                   ul: ({ children }) => <ul className="mb-2 ml-6 list-disc text-white">{children}</ul>,
                   ol: ({ children }) => <ol className="mb-2 ml-6 list-decimal text-white">{children}</ol>,
                   li: ({ children }) => <li className="mb-1 text-white">{children}</li>,

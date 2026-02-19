@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import EclipseMessageItem from './EclipseMessageItem';
+import EmailComposeCard from './EmailComposeCard';
 
 interface Tab {
   id: number;
@@ -10,11 +11,18 @@ interface Tab {
 
 interface Message {
   id?: string;
-  type: 'user' | 'assistant' | 'system';
+  type: 'user' | 'assistant' | 'system' | 'email_compose';
   content: string;
   timestamp?: number;
   tabs?: Tab[];
   links?: string[];
+  emailData?: {
+    to?: string;
+    cc?: string;
+    bcc?: string;
+    subject?: string;
+    body?: string;
+  };
 }
 
 interface ContentProps {
@@ -29,6 +37,8 @@ interface ContentProps {
     status: 'running' | 'completed' | 'error';
   } | null;
   selectedMode?: string;
+  onSendEmail?: (emailData: any) => Promise<void>;
+  onCloseEmailCompose?: () => void;
 }
 
 import { ShinyTextDisplay } from './ShinyText';
@@ -42,6 +52,8 @@ const EclipseContent: React.FC<ContentProps> = ({
   onChatStart,
   currentAgent = null,
   selectedMode = 'ask',
+  onSendEmail,
+  onCloseEmailCompose,
 }) => {
   const [hasStartedChat, setHasStartedChat] = useState<boolean>(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -124,19 +136,34 @@ const EclipseContent: React.FC<ContentProps> = ({
   return (
     <main className="sidebar-content chat-mode">
       <div className="chat-container">
-        {messages.map((message, index) => (
-          <EclipseMessageItem
-            key={message.id || index}
-            message={message}
-            isEditing={editingMessageId === (message.id || String(index))}
-            onStartEdit={handleStartEdit}
-            onUpdateContent={handleUpdateContent}
-            onBlur={handleCancelEdit}
-            onConfirm={() => message.id && handleConfirmEdit(message.id)}
-            onCancel={handleCancelEdit}
-            editRef={editRef}
-          />
-        ))}
+        {messages.map((message, index) => {
+          // Render email compose card for email_compose type
+          if (message.type === 'email_compose' && message.emailData && onSendEmail && onCloseEmailCompose) {
+            return (
+              <EmailComposeCard
+                key={message.id || index}
+                emailData={message.emailData}
+                onSend={onSendEmail}
+                onClose={onCloseEmailCompose}
+              />
+            );
+          }
+
+          // Render normal message
+          return (
+            <EclipseMessageItem
+              key={message.id || index}
+              message={message as any}
+              isEditing={editingMessageId === (message.id || String(index))}
+              onStartEdit={handleStartEdit}
+              onUpdateContent={handleUpdateContent}
+              onBlur={handleCancelEdit}
+              onConfirm={() => message.id && handleConfirmEdit(message.id)}
+              onCancel={handleCancelEdit}
+              editRef={editRef}
+            />
+          );
+        })}
 
         {/* Show loading indicator for ask mode */}
         {selectedMode === 'ask' && isTyping && (

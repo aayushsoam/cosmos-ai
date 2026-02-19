@@ -178,7 +178,10 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
       const messageManager = this.context.messageManager;
       // add the browser state message
       await this.addStateMessageToMemory();
-      const currentState = await this.context.browserContext.getCachedState();
+      // Use cached state for history to avoid redundant fetches
+      const currentState =
+        (await this.context.browserContext.getCachedState()) ||
+        (await this.context.browserContext.getState(this.context.options.useVision));
       browserStateHistory = new BrowserStateHistory(currentState);
 
       // check if the task is paused or stopped
@@ -376,10 +379,17 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
     logger.info('Actions', actions);
 
     const browserContext = this.context.browserContext;
-    const browserState = await browserContext.getState(this.context.options.useVision);
+    // Use cached state when possible to reduce redundant fetches
+    let browserState = await browserContext.getCachedState();
+    if (!browserState) {
+      browserState = await browserContext.getState(this.context.options.useVision);
+    }
     const cachedPathHashes = await calcBranchPathHashSet(browserState);
 
     await browserContext.removeHighlight();
+
+    // Cache state for index-based actions to avoid redundant fetches
+    let cachedStateForIndex = browserState;
 
     for (const [i, action] of actions.entries()) {
       const actionName = Object.keys(action)[0];
@@ -397,7 +407,13 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
 
         const indexArg = actionInstance.getIndexArg(actionArgs);
         if (i > 0 && indexArg !== null) {
-          const newState = await browserContext.getState(this.context.options.useVision);
+          // Only fetch new state if we actually need to check for new elements
+          // Try cached state first, then fallback to fresh state
+          let newState = await browserContext.getCachedState();
+          if (!newState || newState.url !== cachedStateForIndex.url) {
+            newState = await browserContext.getState(this.context.options.useVision);
+            cachedStateForIndex = newState;
+          }
           const newPathHashes = await calcBranchPathHashSet(newState);
           // next action requires index but there are new elements on the page
           if (!newPathHashes.isSubsetOf(cachedPathHashes)) {
@@ -420,7 +436,9 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
 
         // if the action has an index argument, record the interacted element to the result
         if (indexArg !== null) {
-          const domElement = browserState.selectorMap.get(indexArg);
+          // Use the most recent cached state for element lookup
+          const stateForLookup = cachedStateForIndex || browserState;
+          const domElement = stateForLookup.selectorMap.get(indexArg);
           if (domElement) {
             const interactedElement = HistoryTreeProcessor.convertDomElementToHistoryElement(domElement);
             result.interactedElement = interactedElement;
@@ -434,8 +452,8 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
         if (this.context.paused || this.context.stopped) {
           return results;
         }
-        // Wait for 300ms instead of 1 second for faster execution
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Wait for 50ms for ultra-fast execution (optimized from 100ms)
+        await new Promise(resolve => setTimeout(resolve, 50));
       } catch (error) {
         if (error instanceof URLNotAllowedError) {
           throw error;
@@ -451,15 +469,15 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
         this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_FAIL, errorMessage);
         errCount++;
 
-        // Fail faster - only allow 3 errors instead of 8
-        if (errCount > 3) {
+        // Fail faster - only allow 2 errors instead of 3 for quicker recovery
+        if (errCount > 2) {
           logger.error(`Too many errors (${errCount}) - stopping action execution`);
           throw new Error('Too many errors in actions');
         }
 
         // Only log first error to reduce spam
         if (errCount === 1) {
-          logger.warning(`Action error (${errCount}/3): ${errorMessage}`);
+          logger.warning(`Action error (${errCount}/2): ${errorMessage}`);
         }
 
         results.push(
@@ -470,8 +488,8 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
           }),
         );
 
-        // Reduce wait time after error - 500ms instead of 1500ms
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Reduce wait time after error - 100ms for ultra-fast recovery (optimized from 200ms)
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
     }
     return results;
@@ -522,7 +540,11 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
     historyItem: AgentStepRecord,
     delay: number,
   ): Promise<ActionResult[]> {
-    const state = await this.context.browserContext.getState(this.context.options.useVision);
+    // Use cached state when possible to reduce redundant fetches
+    let state = await this.context.browserContext.getCachedState();
+    if (!state) {
+      state = await this.context.browserContext.getState(this.context.options.useVision);
+    }
     if (!state) {
       throw new Error('Invalid browser state');
     }
@@ -637,8 +659,8 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
           }
         } else {
           replayLogger.warning(`Step ${stepIndex + 1} failed (attempt ${retryCount}/${maxRetries}), retrying...`);
-          // Wait before retrying
-          await new Promise(resolve => setTimeout(resolve, delay));
+          // Wait before retrying - optimized: reduce delay for ultra-fast recovery (max 200ms)
+          await new Promise(resolve => setTimeout(resolve, Math.min(delay, 200)));
         }
       }
     }

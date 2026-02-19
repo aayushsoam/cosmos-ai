@@ -8,9 +8,11 @@ class ErrorBoundary extends Component<
   },
   {
     hasError: boolean;
+    error?: Error;
+    errorInfo?: ErrorInfo;
   }
 > {
-  state = { hasError: false };
+  state: { hasError: boolean; error?: Error; errorInfo?: ErrorInfo } = { hasError: false };
 
   static getDerivedStateFromError() {
     return { hasError: true };
@@ -18,11 +20,33 @@ class ErrorBoundary extends Component<
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error(error, errorInfo);
+    this.setState({ error, errorInfo });
   }
 
   render() {
     if (this.state.hasError) {
-      return this.props.fallback;
+      return (
+        <div style={{ padding: 16 }}>
+          {this.props.fallback}
+          {this.state.error && (
+            <pre
+              style={{
+                marginTop: 12,
+                padding: 12,
+                background: '#111827',
+                color: '#e5e7eb',
+                border: '1px solid #374151',
+                borderRadius: 8,
+                whiteSpace: 'pre-wrap',
+                overflow: 'auto',
+                maxHeight: 320,
+              }}>
+              {String(this.state.error?.stack || this.state.error?.message || this.state.error)}
+              {this.state.errorInfo?.componentStack ? `\n\n${this.state.errorInfo.componentStack}` : ''}
+            </pre>
+          )}
+        </div>
+      );
     }
 
     return this.props.children;

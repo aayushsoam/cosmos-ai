@@ -1532,7 +1532,7 @@ export default class Page {
 
       // eslint-disable-next-line no-constant-condition
       while (true) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         const now = Date.now();
         const timeSinceLastActivity = (now - lastActivity) / 1000; // Convert to seconds

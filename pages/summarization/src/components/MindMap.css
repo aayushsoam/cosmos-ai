@@ -1,79 +1,233 @@
+/* ===== Mind Map Container ===== */
+
 .mindmap-container {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: #000000;
-  position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    background: #0f0f13;
+    /* slightly lighter than pure black for depth */
+    cursor: grab;
+    user-select: none;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    perspective: 1000px;
+    /* Enable 3D perspective */
+}
+
+.mindmap-container:active {
+    cursor: grabbing;
+}
+
+/* 3D Grid Floor - gives depth perception */
+.mindmap-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    transform: rotateX(60deg) scale(2);
+    /* Tilted floor effect */
+    transform-origin: center center;
+    pointer-events: none;
+    opacity: 0.4;
+    z-index: 0;
+}
+
+/* Background gradient glow */
+.mindmap-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
 }
 
 .mindmap-svg {
-  width: 100%;
-  height: 100%;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    /* Ensure SVG is above background effects */
+    position: relative;
+    z-index: 10;
+    /* Slight 3D rotation can be applied to the group inside */
 }
 
-.mindmap-node {
-  transition: all 0.2s ease;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+/* ===== Connection Lines ===== */
+.mindmap-link {
+    fill: none;
+    stroke-linecap: round;
+    transition: all 0.3s ease;
+    vector-effect: non-scaling-stroke;
+    /* Keep lines sharp */
 }
 
-.mindmap-node:hover {
-  filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.5)) brightness(1.15);
-  transform: scale(1.03);
+.mindmap-link:hover {
+    stroke-width: 3px !important;
+    stroke: #a5b4fc !important;
+    filter: drop-shadow(0 0 5px rgba(165, 180, 252, 0.5));
 }
 
-.mindmap-line {
-  transition: stroke 0.2s ease;
-  opacity: 0.6;
+/* ===== Node Groups ===== */
+.mindmap-node-group {
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* Ensure visible */
+    opacity: 1;
 }
 
-.mindmap-line:hover {
-  opacity: 1;
-  stroke-width: 2;
+.mindmap-node-group:hover {
+    /* Pop effect on hover */
+    z-index: 100;
+    /* Bring to front */
 }
 
+/* ===== Node Rectangles (The Cards) ===== */
+.mindmap-node-rect {
+    transition: all 0.2s ease;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+    /* Glassmorphism background */
+    fill: rgba(30, 41, 59, 0.7);
+    stroke: rgba(148, 163, 184, 0.3);
+}
+
+.mindmap-node-group:hover .mindmap-node-rect {
+    fill: rgba(51, 65, 85, 0.9);
+    stroke: #818cf8;
+    stroke-width: 2px;
+    filter: drop-shadow(0 8px 15px rgba(99, 102, 241, 0.25));
+}
+
+.mindmap-node-rect.root {
+    fill: rgba(30, 27, 75, 0.9);
+    stroke: #6366f1;
+    stroke-width: 2px;
+    filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.4));
+}
+
+.mindmap-node-rect.selected {
+    stroke: #a5b4fc;
+    stroke-width: 3px;
+    filter: drop-shadow(0 0 15px rgba(165, 180, 252, 0.5));
+}
+
+/* ===== Text Labels ===== */
 .mindmap-label {
-  user-select: none;
-  pointer-events: none;
+    pointer-events: none;
+    user-select: none;
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    fill: #e2e8f0;
+    /* Ensure text is visible light grey */
 }
 
-.expand-indicator {
-  pointer-events: none;
-  opacity: 0.8;
+.mindmap-node-group:hover .mindmap-label {
+    fill: #ffffff;
+    font-weight: 600;
+}
+
+/* ===== Expand/Collapse Toggle ===== */
+.mindmap-expander circle {
+    transition: all 0.2s ease;
+}
+
+.mindmap-expander:hover circle {
+    fill: #475569;
+    stroke: #94a3b8;
+}
+
+/* ===== Control Buttons (Zoom, Fit) ===== */
+.zoom-controls,
+.fit-btn {
+    position: absolute;
+    z-index: 50;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #cbd5e1;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 .zoom-controls {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 100;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px;
 }
 
 .zoom-btn {
-  width: 36px;
-  height: 36px;
-  background: #1f2937;
-  border: 1px solid #374151;
-  border-radius: 6px;
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: bold;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: 18px;
+    border-radius: 6px;
 }
 
 .zoom-btn:hover {
-  background: #374151;
-  border-color: #4b5563;
-  transform: scale(1.05);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
 }
 
-.zoom-btn:active {
-  transform: scale(0.95);
+.fit-btn {
+    bottom: 24px;
+    left: 24px;
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+.fit-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
+/* ===== Tooltip ===== */
+.mindmap-tooltip {
+    position: absolute;
+    z-index: 100;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    padding: 12px 16px;
+    border-radius: 8px;
+    max-width: 300px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.mindmap-tooltip.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.mindmap-tooltip-title {
+    color: #fff;
+    font-weight: 700;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.mindmap-tooltip-content {
+    color: #94a3b8;
+    font-size: 12px;
+    line-height: 1.5;
 }

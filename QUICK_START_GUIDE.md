@@ -45,7 +45,7 @@
 
 ### Build the Extension
 ```bash
-cd "C:\Users\thaku\browser ai\nanobrowser"
+cd "C:\Users\thaku\browser ai\cosmos"
 
 # Build entire project
 pnpm build

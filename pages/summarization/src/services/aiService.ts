@@ -6,12 +6,19 @@ export interface AIResponse {
   error?: string;
 }
 
+export type DocumentKind = 'summary' | 'research' | 'research_paper' | 'latex' | 'map';
+
 export class AIService {
   private static port: chrome.runtime.Port | null = null;
 
   private static getPort(): chrome.runtime.Port {
     if (!this.port) {
-      this.port = chrome.runtime.connect({ name: 'summarization-ai-connection' });
+      const runtime = globalThis.chrome?.runtime;
+      if (!runtime?.connect) {
+        throw new Error('chrome.runtime.connect is not available');
+      }
+
+      this.port = runtime.connect({ name: 'summarization-ai-connection' });
 
       this.port.onDisconnect.addListener(() => {
         this.port = null;
@@ -80,6 +87,37 @@ export class AIService {
         port.onMessage.removeListener(messageHandler);
         reject(new Error('Request timeout'));
       }, 30000);
+    });
+  }
+
+  static async generateDocument(kind: DocumentKind, content: string, task?: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const port = this.getPort();
+
+      const messageHandler = (response: any) => {
+        if (response.type === 'generated_document') {
+          port.onMessage.removeListener(messageHandler);
+          if (response.success) {
+            resolve(response.text);
+          } else {
+            reject(new Error(response.error || 'Failed to generate document'));
+          }
+        }
+      };
+
+      port.onMessage.addListener(messageHandler);
+
+      port.postMessage({
+        type: 'generate_document',
+        kind,
+        content,
+        task,
+      });
+
+      setTimeout(() => {
+        port.onMessage.removeListener(messageHandler);
+        reject(new Error('Request timeout'));
+      }, 60000);
     });
   }
 }

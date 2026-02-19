@@ -1,0 +1,79 @@
+/* Code Block Styling - ChatGPT Style */
+.code-block-container {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    margin: 1rem 0;
+    background: #0d0d0d;
+    border: 1px solid #333;
+}
+
+/* Reusing class name to avoid changing import filename for now, but style is FLAT */
+.rainbow-border {
+    position: relative;
+    z-index: 0;
+    border-radius: 0.5rem;
+    padding: 0;
+    /* No rainbow padding */
+    background: transparent;
+    /* No rainbow bg */
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.rainbow-border::after {
+    display: none;
+    /* Remove the mask */
+}
+
+.code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: #2f2f2f;
+    /* Header bg */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-family: ui-sans-serif, -apple-system, system-ui, "Segoe UI", Helvetica, "Apple Color Emoji", "Arial", sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+    font-size: 0.75rem;
+    color: #b4b4b4;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+.code-copy-btn {
+    background: transparent;
+    border: none;
+    color: #b4b4b4;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.code-copy-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+/* Highlight.js overrides for dark mode consistency */
+.hljs {
+    background: #0d0d0d !important;
+    color: #e6e6e6;
+    padding: 1rem;
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+    overflow-x: auto;
+}
+
+/* KaTeX Enhancements */
+.katex-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.5rem 0;
+}
