@@ -6,16 +6,21 @@ It combines a **Thinker (planning)** and **Navigator (execution)** architecture 
 
 ---
 
-## 📄 Research Paper
+## 📄 Research Paper 1
 
 Read the full paper:  
-👉 https://doi.org/10.13140/RG.2.2.12517.56801  
+👉[research paper 1   link here](https://doi.org/10.13140/RG.2.2.12517.56801) 
+
+---
+
+## 📄 Research Paper 2
+👉[research paper 2   link here](https://zenodo.org/records/19742325?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6ImZiMWFmN2U4LWVkOTUtNGU4YS1hMmJlLWQ2YmIxNzI3MWNlZCIsImRhdGEiOnt9LCJyYW5kb20iOiJmZWJjNjljNmFjMWMzNjMyZjQ1NDgyODVjODk5YWQzMSJ9.3XJyZbVv08qyssEBad4iemNRApK1tHwWwRkxjQq1dAkMIqXi5OuELycvr-EhNtb8jkV675oEuxQ6VNXneYVlWQ&preview_file=cosmos_improved_paper.pdf)
 
 ---
 
 ## 🌐 Live Demo
 
-👉 [[Add your website link here]](https://cosmos-ai-web.vercel.app/)
+👉 [[cosmoas ai demo and step ]](https://cosmos-ai-web.vercel.app/)
 ## 🌐 youtube Demo
 
 👉 [[Add your website link here]](https://youtu.be/wCqLe2R4WeY?si=ywUOcuHQL7yHWelL)
