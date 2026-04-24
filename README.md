@@ -18,7 +18,7 @@ Read the full paper:
 👉 [[Add your website link here]](https://cosmos-ai-web.vercel.app/)
 ## 🌐 youtube Demo
 
-👉 [[Add your website link here]]((https://youtu.be/wCqLe2R4WeY?si=ywUOcuHQL7yHWelL))
+👉 [[Add your website link here]](https://youtu.be/wCqLe2R4WeY?si=ywUOcuHQL7yHWelL)
 ---
 
 ## 🧠 Key Features
